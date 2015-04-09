@@ -113,7 +113,7 @@ public class EJLookupActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-		String theme = getPrefString(R.string.setting_theme_color, "0");
+		String theme = getPrefString(R.string.setting_theme_color, (android.os.Build.BRAND.equals("chromium") ? "1" : "0"));
 		if (theme.equals("1"))
 			setTheme(R.style.AppThemeLight);
 
@@ -142,6 +142,9 @@ public class EJLookupActivity extends Activity {
 			finish();
 			return;
 		}
+
+		if (android.os.Build.BRAND.equals("chromium"))
+			bugKitKat = true;
 
 		Nihongo.Init(getResources());
 

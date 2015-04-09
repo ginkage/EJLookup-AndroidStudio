@@ -265,7 +265,6 @@ public class DictionaryDownloaderActivity extends Activity implements IDownloade
          * worth doing. (so no Market request is necessary)
          */
         if (!expansionFilesDelivered()) {
-
             try {
                 Intent launchIntent = DictionaryDownloaderActivity.this
                         .getIntent();
@@ -307,7 +306,6 @@ public class DictionaryDownloaderActivity extends Activity implements IDownloade
         } else {
             validateXAPKZipFiles();
         }
-
     }
 
     /**
