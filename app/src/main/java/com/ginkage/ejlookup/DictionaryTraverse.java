@@ -42,41 +42,38 @@ class DictionaryTraverse {
             "mktdic",
             "pandpdic",
             "stardict",
-            "concrete"//,
-//            "j_places",
-//            "enamdict",
-//            "ginkage"
+            "concrete"
         };
 
     public static final long[][] obbPos = {
-            { 58542592, 59615744 },
-            { 78240256, 91783680 },
-            { 17678848, 37028352 },
-            { 60131840, 62849536 },
-            { 10758656, 15403520 },
-            { 7391744, 7498240 },
-            { 10189312, 10408448 },
-            { 7553536, 9341440 },
-            { 64825856, 65286656 },
-            { 56631808, 58018304 },
-            { 219648, 1092096 },
-            { 1460736, 1618432 },
-            { 1661440, 5284352 },
-            { 52412928, 54465024 },
-            { 55466496, 55775744 },
-            { 55845376, 55992832 },
-            { 56033792, 56224256 },
-            { 56275456, 56347136 },
-            { 56363520, 56568320 },
-            { 64045568, 64612864 },
-            { 65450496, 65571328 },
-            { 65608192, 65706496 },
-            { 65739264, 65825280 },
-            { 65847808, 65874432 },
-            { 10500608, 10693120 }
+            { 58879488, 59952640 },
+            { 78591488, 92777984 },
+            { 17778176, 37127680 },
+            { 60468736, 63186432 },
+            { 10823168, 15468032 },
+            { 7443968, 7550464 },
+            { 10253824, 10472960 },
+            { 7605760, 9393664 },
+            { 65170944, 65631744 },
+            { 56956416, 58342912 },
+            { 230912, 1103360 },
+            { 1472000, 1629696 },
+            { 1672704, 5295616 },
+            { 52721152, 54773248 },
+            { 55789056, 56098304 },
+            { 56167936, 56315392 },
+            { 56356352, 56546816 },
+            { 56598016, 56669696 },
+            { 56688128, 56892928 },
+            { 64388608, 64955904 },
+            { 65799680, 65920512 },
+            { 65957376, 66055680 },
+            { 66088448, 66174464 },
+            { 66199040, 66225664 },
+            { 10565120, 10757632 },
     };
 
-    public static final long sugPos = 65880576;
+    public static final long sugPos = 66231808;
 
     public static final String[] fileDesc = {
             "Japanese-Russian electronic dictionary",
@@ -103,10 +100,7 @@ class DictionaryTraverse {
             "Adam Rice's business & marketing glossary lists",
             "Jim Minor's Pulp & Paper Industry Glossary",
             "Raphael Garrouty's compilation of constellation names",
-            "Gururaj Rao's Concrete Terminology Glossary"//,
-//            "j_places",
-//            "enamdict",
-//            "ginkage"
+            "Gururaj Rao's Concrete Terminology Glossary"
     };
 
     public static boolean Init(String expPath, boolean bug) {
@@ -214,7 +208,7 @@ class DictionaryTraverse {
 
             fileIdx.close();
 
-            TreeSet<Integer> spos = new TreeSet<Integer>();
+            TreeSet<Integer> spos = new TreeSet<>();
             int i, size = elines.size();
             for (i = 0; i < size; i++) {
                 Integer line = elines.keyAt(i);
@@ -360,7 +354,7 @@ class DictionaryTraverse {
         }
 
         if (match == nlen || match == wlen) {
-            ArrayList<Integer> cpos = new ArrayList<Integer>();
+            ArrayList<Integer> cpos = new ArrayList<>();
 
             if (children) // One way or the other, we'll need a full children list
                 do { // Read it from this location once, save for later
@@ -390,7 +384,7 @@ class DictionaryTraverse {
                 }
 
                 if (partial) {
-                    ArrayList<Integer> ppos = new ArrayList<Integer>();
+                    ArrayList<Integer> ppos = new ArrayList<>();
                     if (parents) // One way or the other, we'll need a full parents list
                         do { // Read it from this location once, save for later
                             p = betole(fidx.readInt());

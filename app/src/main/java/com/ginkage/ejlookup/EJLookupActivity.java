@@ -14,7 +14,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
@@ -61,11 +60,7 @@ public class EJLookupActivity extends Activity {
     private boolean bugKitKat = false;
 
     private String getExpansionFileName() {
-        final String sep = File.separator;
-        final String packageName = getPackageName();
-        final String expAPK = "main.13." + packageName + ".obb";
-        final String root = Environment.getExternalStorageDirectory().toString();
-        return root + sep + "Android" + sep + "obb" + sep + packageName + sep + expAPK;
+        return getObbDir().getAbsolutePath() + File.separator + "main.31." + getPackageName() + ".obb";
     }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {

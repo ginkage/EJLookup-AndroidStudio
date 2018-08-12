@@ -97,14 +97,14 @@ class Suggest {
         }
 
         if (!suggest.isEmpty() && !task.isCancelled()) {
-            result = new ArrayList<String>(10);
-            TreeSet<Pair> freq = new TreeSet<Pair>();
+            result = new ArrayList<>(10);
+            TreeSet<Pair> freq = new TreeSet<>();
             for (String str : suggest.keySet()) {
                 Integer n = suggest.get(str);
                 freq.add(new Pair(str, n));
             }
 
-            HashSet<String> duplicate = new HashSet<String>();
+            HashSet<String> duplicate = new HashSet<>();
             String begin = (last >= 0 ? request.substring(0, last) : "");
             for (Pair pit : freq)
                 if (result.size() < maxsug) {
@@ -189,7 +189,7 @@ class Suggest {
         }
 
         if (match == nlen || match == wlen) {
-            TreeMap<Integer, Character> cpos = new TreeMap<Integer, Character>();
+            TreeMap<Integer, Character> cpos = new TreeMap<>();
             exact = exact && (match == nlen);
 
             if (children) // One way or the other, we'll need a full children list

@@ -23,12 +23,12 @@ class ResultLine {
         resmax = 250;
     }
 
-    static private String getSubstr(char[] text, int begin) {
+    static private void addSubstr(StringBuilder str, char[] text, int begin) {
         int i, len = text.length, end = -1;
         for (i = begin; i < len && text[i] != 0; i++)
             end = i;
-        if (end < 0) return "";
-        return new String(text, begin, end - begin + 1);
+        if (end >= begin)
+            str.append(text, begin, end - begin + 1);
     }
 
     static private int strchr(char[] text, int begin, char c) {
@@ -138,7 +138,7 @@ class ResultLine {
                 while (end > kanji && text[end] == ' ')
                     text[end--] = '\0';
             }
-            skanji.append(getSubstr(text, kanji));
+            addSubstr(skanji, text, kanji);
         }
 
         if (kana >= 0) {
@@ -199,7 +199,7 @@ class ResultLine {
                         while (trans < len && text[trans] == ' ') trans++;
                         if (trans < len && text[trans] != 0) {
                             if (strans.length() > 0) strans.append('\n');
-                            strans.append(getSubstr(text, trans));
+                            addSubstr(strans, text, trans);
                         }
                         trans = p;
                     }
@@ -208,7 +208,7 @@ class ResultLine {
                     while (trans < len && text[trans] == ' ') trans++;
                     if (trans < len && text[trans] != 0) {
                         if (strans.length() > 0) strans.append('\n');
-                        strans.append(getSubstr(text, trans));
+                        addSubstr(strans, text, trans);
                     }
                 }
             }
