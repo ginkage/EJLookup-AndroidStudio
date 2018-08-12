@@ -60,7 +60,8 @@ public class EJLookupActivity extends Activity {
     private boolean bugKitKat = false;
 
     private String getExpansionFileName() {
-        return getObbDir().getAbsolutePath() + File.separator + "main.31." + getPackageName() + ".obb";
+        final String obbDir = getObbDir().getAbsolutePath() + File.separator;
+        return obbDir + "main.32." + getPackageName() + ".obb";
     }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {
