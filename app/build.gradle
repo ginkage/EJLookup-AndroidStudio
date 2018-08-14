@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.ginkage.ejlookup"
-        versionCode 33
-        versionName "1.4"
+        versionCode 34
+        versionName "1.5"
         minSdkVersion 14
         targetSdkVersion 28
     }
@@ -24,6 +24,4 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
-    useLibrary 'org.apache.http.legacy'
 }
