@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +19,8 @@ import android.os.Bundle;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
-import android.text.Editable;
+import android.provider.SearchRecentSuggestions;
 import android.text.SpannableString;
-import android.text.TextWatcher;
 import android.text.util.Linkify;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -30,11 +31,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,22 +42,26 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES;
+
 public class EJLookupActivity extends Activity {
     private static final int ID_DIALOG_ABOUT = 0;
     private static final int ID_DIALOG_NODICT = 1;
     private static ArrayList<ResultLine> reslist = null;
-    private static GetSuggestTask getSuggest = null;
     private static GetLookupResultsTask getResult = null;
     public static boolean keepMount = false;
     private static SharedPreferences preferences = null;
-    private AutoCompleteTextView query = null;
+    private SearchView query = null;
+    private Button search = null;
     private ExpandableListView results = null;
     private StorageManager storageManager = null;
     private ClipboardManager clipboard = null;
+    private InputMethodManager imm = null;
     private String expFile = null;
     private ProgressDialog waitMount = null;
     private boolean initPath = false;
     private boolean bugKitKat = false;
+    private SearchRecentSuggestions suggestions;
 
     private String getExpansionFileName() {
         final String obbDir = getObbDir().getAbsolutePath() + File.separator;
@@ -89,6 +93,7 @@ public class EJLookupActivity extends Activity {
         int i, groups = adResults.getGroupCount();
         for (i = 0; i < groups; i++)
             results.expandGroup(i);
+        results.requestFocus();
     }
 
     /** Called when the activity is first created. */
@@ -99,7 +104,6 @@ public class EJLookupActivity extends Activity {
         String theme = getPrefString(R.string.setting_theme_color, (android.os.Build.BRAND.equals("chromium") ? "1" : "0"));
         setTheme(theme.equals("1") ? R.style.AppThemeLight : R.style.AppTheme);
 
-        //Log.i("activity", "onCreate");
         super.onCreate(savedInstanceState);
 
         String def_lang = Locale.getDefault().getLanguage();
@@ -126,12 +130,22 @@ public class EJLookupActivity extends Activity {
 
         Nihongo.Init(getResources());
 
-        storageManager = (StorageManager) getSystemService(STORAGE_SERVICE);
-        clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        suggestions = new SearchRecentSuggestions(
+                this, SuggestionProvider.AUTHORITY, DATABASE_MODE_QUERIES);
+
+        storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
+        clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 
         query = findViewById(R.id.editQuery);
         results = findViewById(R.id.listResults);
-        Button search = findViewById(R.id.buttonSearch);
+        search = findViewById(R.id.buttonSearch);
+
+        SearchableInfo searchableInfo = searchManager.getSearchableInfo(getComponentName());
+        query.setSearchableInfo(searchableInfo);
+        query.setQueryRefinementEnabled(true);
+        query.setIconifiedByDefault(false); // Do not iconify the widget; expand it by default
 
         results.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
             ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo)menuInfo;
@@ -146,37 +160,23 @@ public class EJLookupActivity extends Activity {
 
         query.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
 
-        query.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                searchClicked(v);
+        query.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchClicked(search);
                 return true;
             }
-            return false;
-        });
 
-        query.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {
+            @Override
+            public boolean onQueryTextChange(String newText) {
                 if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
                     Mount();
-                    return;
                 }
-
-                if (getSuggest != null) {
-                    getSuggest.cancel(true);
-                    getSuggest = null;
-                }
-
-                query.dismissDropDown();
-                query.setAdapter(null);
-
-                if (!s.equals("")) {
-                    getSuggest = new GetSuggestTask();
-                    getSuggest.execute(s.toString());
-                }
+                return false;
             }
-            public void beforeTextChanged(CharSequence s, int start, int count, int after){}
-            public void onTextChanged(CharSequence s, int start, int before, int count){}
         });
+
+        search.setOnClickListener(this::searchClicked);
 
         search.setOnLongClickListener(v -> {
             CharSequence paste = clipboard.getText();
@@ -184,69 +184,49 @@ public class EJLookupActivity extends Activity {
             if (paste == null || paste.length() == 0)
                 Toast.makeText(EJLookupActivity.this, getString(R.string.text_clipboard_empty), Toast.LENGTH_LONG).show();
             else {
-                query.setText(paste);
-                query.setSelection(paste.length());
-                searchClicked(v);
+                query.setQuery(paste, true);
             }
 
             return true;
         });
+
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String text = intent.getStringExtra(SearchManager.QUERY);
+            query.setQuery(text, true);
+        }
     }
 
     private final OnObbStateChangeListener mStateListener = new OnObbStateChangeListener() {
         public void onObbStateChange(String path, int state) {
             switch (state) {
                 case MOUNTED:
-/*                    Toast.makeText(getApplicationContext(),
-                        "The OBB container is now mounted and ready for use.",
-                        Toast.LENGTH_LONG).show();
-*/
                     initPath = DictionaryTraverse.Init(storageManager.getMountedObbPath(path), false);
                     break;
-
                 case UNMOUNTED:
-/*                    Toast.makeText(getApplicationContext(),
-                        "The OBB container is now unmounted and not usable.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_INTERNAL:
-/*                    Toast.makeText(getApplicationContext(),
-                        "There was an internal system error encountered while trying to mount the OBB.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_COULD_NOT_MOUNT:
                     bugKitKat = true;
-/*                    Toast.makeText(getApplicationContext(),
-                        "The OBB could not be mounted by the system.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_COULD_NOT_UNMOUNT:
-/*                    Toast.makeText(getApplicationContext(),
-                        "The OBB could not be unmounted.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_NOT_MOUNTED:
-/*                    Toast.makeText(getApplicationContext(),
-                        "A call was made to unmount the OBB when it was not mounted.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_ALREADY_MOUNTED:
-/*                    Toast.makeText(getApplicationContext(),
-                        "The OBB has already been mounted.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 case ERROR_PERMISSION_DENIED:
-/*                    Toast.makeText(getApplicationContext(),
-                        "The current application does not have permission to use this OBB.",
-                        Toast.LENGTH_LONG).show();
-*/                    break;
-
+                    break;
                 default:
                     break;
             }
@@ -259,7 +239,6 @@ public class EJLookupActivity extends Activity {
     };
 
     void Mount() {
-        //Log.i("activity", "Mount");
         initPath = false;
         keepMount = false;
 
@@ -272,44 +251,31 @@ public class EJLookupActivity extends Activity {
     }
 
     void Unmount() {
-        //Log.i("activity", "Unmount");
         if (storageManager != null && storageManager.isObbMounted(expFile))
             storageManager.unmountObb(expFile, false, mStateListener);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        //Log.i("activity", "onSaveInstanceState");
         super.onSaveInstanceState(outState);
         keepMount = true;
     }
 
     @Override
     protected void onStart() {
-        //Log.i("activity", "onStart");
         super.onStart();
         Mount();
     }
 
     @Override
     protected void onStop() {
-        //Log.i("activity", "onStop");
-
         if (getResult != null)
             getResult.curContext = null;
-
-        if (getSuggest != null) {
-            getSuggest.cancel(true);
-            getSuggest = null;
-        }
-
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        //Log.i("activity", "onDestroy");
-
         if (!keepMount)
             Unmount();
 
@@ -383,56 +349,28 @@ public class EJLookupActivity extends Activity {
         return true;
     }
 
-    public void searchClicked(View view) {
+    public void searchClicked(View v) {
         if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
             Toast.makeText(this, getString(R.string.text_mount_error), Toast.LENGTH_LONG).show();
             Mount();
         }
-        else if (query.getText().length() == 0) {
+        else if (query.getQuery().length() == 0) {
             Toast.makeText(this, getString(R.string.text_query_missing), Toast.LENGTH_LONG).show();
         }
         else if (getResult == null) {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
-
-            if (getSuggest != null) {
-                getSuggest.cancel(true);
-                getSuggest = null;
-            }
-            query.dismissDropDown();
-            query.setAdapter(null);
+            query.clearFocus();
 
             setProgressBarIndeterminateVisibility(true);
             results.setAdapter((MyExpandableListAdapter)null);
+
             reslist = null;
             getResult = new GetLookupResultsTask();
             getResult.curContext = this;
-            getResult.execute(query.getText().toString());
-        }
-    }
 
-    private class GetSuggestTask extends AsyncTask<String, Integer, ArrayList<String>> {
-        @Override
-        protected ArrayList<String> doInBackground(String... args) {
-            if (args != null) {
-                String request = args[0];
-                return Suggest.getLookupResults(EJLookupActivity.this, request, this);
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<String> lines) {
-            if (lines != null) {
-                ArrayAdapter<String> suggest = new ArrayAdapter<>(EJLookupActivity.this, R.layout.list_item, lines);
-                query.setAdapter(suggest);
-                query.showDropDown();
-            }
+            String text = query.getQuery().toString();
+            suggestions.saveRecentQuery(text, null);
+            getResult.execute(text);
         }
     }
 

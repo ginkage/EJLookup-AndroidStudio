@@ -1,6 +1,8 @@
 package com.ginkage.ejlookup;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,11 +17,15 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 class Suggest {
-    private static int Tokenize(char[] text, int len, RandomAccessFile fileIdx, HashMap<String, Integer> suggest, AsyncTask<String, Integer, ArrayList<String>> task, long sugPos) throws IOException {
+    private static int Tokenize(char[] text, int len, RandomAccessFile fileIdx,
+                                HashMap<String, Integer> suggest,
+                                AsyncTask<String, Integer, ArrayList<String>> task,
+                                long sugPos) throws IOException {
         int p, last = -1;
 
         for (p = 0; p < len; p++)
-            if (Nihongo.letter(text[p]) || (text[p] == '\'' && p > 0 && p+1 < len && Nihongo.letter(text[p-1]) && Nihongo.letter(text[p+1]))) {
+            if (Nihongo.letter(text[p]) || (text[p] == '\'' && p > 0 && p+1 < len
+                    && Nihongo.letter(text[p-1]) && Nihongo.letter(text[p+1]))) {
                 if (last < 0) {
                     last = p;
                 }
@@ -50,10 +56,13 @@ class Suggest {
         }
     }
 
-    public static ArrayList<String> getLookupResults(EJLookupActivity context, String request, AsyncTask<String, Integer, ArrayList<String>> task) {
+    public static ArrayList<String> getLookupResults(
+            Context context, String request,
+            AsyncTask<String, Integer, ArrayList<String>> task) {
         ArrayList<String> result = null;
 
-        int maxsug = Integer.parseInt(context.getPrefString(R.string.setting_max_suggest, "10"));
+        int maxsug = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context)
+                .getString(context.getString(R.string.setting_max_suggest), "10"));
         boolean romanize = EJLookupActivity.getPrefBoolean(context.getString(R.string.setting_suggest_romaji), true);
 
         char[] text = new char[request.length()];
@@ -96,7 +105,7 @@ class Suggest {
             e.printStackTrace();
         }
 
-        if (!suggest.isEmpty() && !task.isCancelled()) {
+        if (!suggest.isEmpty() && (task == null || !task.isCancelled())) {
             result = new ArrayList<>(10);
             TreeSet<Pair> freq = new TreeSet<>();
             for (String str : suggest.keySet()) {
@@ -138,15 +147,20 @@ class Suggest {
     }
 
     private static int betole(int p) {
-        return ((p & 0x000000ff) << 24) + ((p & 0x0000ff00) << 8) + ((p & 0x00ff0000) >>> 8) + ((p & 0xff000000) >>> 24);
+        return ((p & 0x000000ff) << 24) + ((p & 0x0000ff00) << 8)
+                + ((p & 0x00ff0000) >>> 8) + ((p & 0xff000000) >>> 24);
     }
 
     private static char shtoch(int p) {
         return (char) (((p & 0x000000ff) << 8) + ((p & 0x0000ff00) >>> 8));
     }
 
-    private static boolean Traverse(String word, RandomAccessFile fidx, long pos, String str, HashMap<String, Integer> suglist, AsyncTask<String, Integer, ArrayList<String>> task, long sugPos) throws IOException {
-        if (task.isCancelled()) return false;
+    private static boolean Traverse(
+            String word, RandomAccessFile fidx, long pos, String str,
+            HashMap<String, Integer> suglist,
+            AsyncTask<String, Integer, ArrayList<String>> task,
+            long sugPos) throws IOException {
+        if (task != null && task.isCancelled()) return false;
         fidx.seek(pos + sugPos);
 
         int tlen = fidx.readUnsignedByte();
@@ -198,8 +212,8 @@ class Suggest {
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (ch == word.charAt(match)) {
-                            String newWord = word.substring(match, word.length());
-                            return Traverse(newWord, fidx, (p & 0x7fffffff), str + ch, suglist, task, sugPos); // Traverse children
+                            String newWord = word.substring(match, word.length()); // Traverse children
+                            return Traverse(newWord, fidx, (p & 0x7fffffff), str + ch, suglist, task, sugPos);
                         }
                     }
                     else
@@ -215,8 +229,8 @@ class Suggest {
                     suglist.put(str, v);
                 }
 
-                for (int child_pos : cpos.keySet())
-                    Traverse("", fidx, child_pos, str + cpos.get(child_pos), suglist, task, sugPos); // Traverse everything that begins with this word
+                for (int child_pos : cpos.keySet()) // Traverse everything that begins with this word
+                    Traverse("", fidx, child_pos, str + cpos.get(child_pos), suglist, task, sugPos);
 
                 return true; // Got result
             }

@@ -173,7 +173,9 @@ class DictionaryTraverse {
         }
     }
 
-    private static void LookupDict(String fileName, TreeSet<String> sexact, TreeSet<String> spartial, char[] text, int qlen, char[] kanatext, int klen, int fileNum) {
+    private static void LookupDict(
+            String fileName, TreeSet<String> sexact, TreeSet<String> spartial,
+            char[] text, int qlen, char[] kanatext, int klen, int fileNum) {
         try {
             File idx, dic;
             boolean exists = true;
@@ -362,8 +364,8 @@ class DictionaryTraverse {
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (c == word.charAt(match)) {
-                            String newWord = word.substring(match, word.length());
-                            return Traverse(newWord, fidx, (p & 0x7fffffff), partial, true, poslist, idxPos); // Traverse children
+                            String newWord = word.substring(match, word.length()); // Traverse children
+                            return Traverse(newWord, fidx, (p & 0x7fffffff), partial, true, poslist, idxPos);
                         }
                     }
                     else if (partial && child)
@@ -392,11 +394,11 @@ class DictionaryTraverse {
                         } while ((p & 0x80000000) == 0);
 
                     if (child)
-                        for (int it : cpos)
-                            Traverse("", fidx, it, partial, true, poslist, idxPos); // Traverse everything that begins with this word
+                        for (int it : cpos) // Traverse everything that begins with this word
+                            Traverse("", fidx, it, partial, true, poslist, idxPos);
 
-                    for (int it : ppos)
-                        Traverse("", fidx, it, partial, false, poslist, idxPos); // Traverse everything that fully has this word in it
+                    for (int it : ppos) // Traverse everything that fully has this word in it
+                        Traverse("", fidx, it, partial, false, poslist, idxPos);
                 }
 
                 return true; // Got result
