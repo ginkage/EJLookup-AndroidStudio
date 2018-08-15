@@ -63,6 +63,8 @@ public class EJLookupActivity extends Activity {
     private boolean bugKitKat = false;
     private SearchRecentSuggestions suggestions;
 
+    public static String lastQuery = null;
+
     private String getExpansionFileName() {
         final String obbDir = getObbDir().getAbsolutePath() + File.separator;
         return obbDir + "main.32." + getPackageName() + ".obb";
@@ -169,6 +171,7 @@ public class EJLookupActivity extends Activity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                lastQuery = newText;
                 if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
                     Mount();
                 }
@@ -359,7 +362,6 @@ public class EJLookupActivity extends Activity {
         }
         else if (getResult == null) {
             imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
-            query.clearFocus();
 
             setProgressBarIndeterminateVisibility(true);
             results.setAdapter((MyExpandableListAdapter)null);
