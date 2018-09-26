@@ -108,6 +108,17 @@ class DictionaryTraverse {
         if (expPath == null)
             return false;
 
+        if (bug && expPath.contains("storage/emulated/0")) {
+            String testPath = expPath.replace("storage/emulated/0", "sdcard");
+            File dir = new File(testPath);
+            filePath = dir.getAbsolutePath();
+            hasDicts = dir.exists();
+            EJLookupActivity.log.append("Testing with filePath: ").append(filePath).append(", dirExists: ").append(hasDicts).append('\n');
+            if (hasDicts) {
+                return true;
+            }
+        }
+
         File dir = new File(expPath);
 
         if (bugKitKat) {
@@ -120,6 +131,7 @@ class DictionaryTraverse {
             for (int i = 0; i < fileList.length && !hasDicts; i++)
                 hasDicts |= checkExists(fileList[i]);
         }
+        EJLookupActivity.log.append("Init with filePath: ").append(filePath).append(", bug: ").append(bug).append(", dirExists: ").append(hasDicts).append('\n');
 
         return hasDicts;
     }

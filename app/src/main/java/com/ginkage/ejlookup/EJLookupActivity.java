@@ -1,5 +1,7 @@
 package com.ginkage.ejlookup;
 
+import android.Manifest;
+import android.Manifest.permission;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -15,6 +17,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
@@ -47,6 +50,7 @@ import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUER
 public class EJLookupActivity extends Activity {
     private static final int ID_DIALOG_ABOUT = 0;
     private static final int ID_DIALOG_NODICT = 1;
+    private static final int PERMISSION_REQUEST = 123;
     private static ArrayList<ResultLine> reslist = null;
     private static GetLookupResultsTask getResult = null;
     public static boolean keepMount = false;
@@ -60,14 +64,17 @@ public class EJLookupActivity extends Activity {
     private String expFile = null;
     private ProgressDialog waitMount = null;
     private boolean initPath = false;
-    private boolean bugKitKat = false;
+    private boolean bugKitKat = true;
     private SearchRecentSuggestions suggestions;
+    public static StringBuffer log = new StringBuffer(1024);
 
     public static String lastQuery = null;
 
     private String getExpansionFileName() {
         final String obbDir = getObbDir().getAbsolutePath() + File.separator;
-        return obbDir + "main.32." + getPackageName() + ".obb";
+        final String obb = obbDir + "main.32." + getPackageName() + ".obb";
+        log.append("Obb location: ").append(obb).append('\n');
+        return obb;
     }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {
@@ -213,22 +220,29 @@ public class EJLookupActivity extends Activity {
         public void onObbStateChange(String path, int state) {
             switch (state) {
                 case MOUNTED:
+                    log.append("Mounted! At: ").append(storageManager.getMountedObbPath(path)).append('\n');
                     initPath = DictionaryTraverse.Init(storageManager.getMountedObbPath(path), false);
                     break;
                 case UNMOUNTED:
+                    log.append("Unmounted\n");
                     break;
                 case ERROR_INTERNAL:
-                    break;
+                    log.append("Internal error\n");
                 case ERROR_COULD_NOT_MOUNT:
                     bugKitKat = true;
+                    log.append("Could not mount (bugKitKat)\n");
                     break;
                 case ERROR_COULD_NOT_UNMOUNT:
+                    log.append("Could not unmount\n");
                     break;
                 case ERROR_NOT_MOUNTED:
+                    log.append("Not mounted\n");
                     break;
                 case ERROR_ALREADY_MOUNTED:
+                    log.append("Already mounted\n");
                     break;
                 case ERROR_PERMISSION_DENIED:
+                    log.append("Permission denied\n");
                     break;
                 default:
                     break;
@@ -245,11 +259,45 @@ public class EJLookupActivity extends Activity {
         initPath = false;
         keepMount = false;
 
-        if (storageManager.isObbMounted(expFile) || bugKitKat)
-            initPath = DictionaryTraverse.Init(bugKitKat ? expFile : storageManager.getMountedObbPath(expFile), bugKitKat);
-        else if (waitMount == null) {
+        if (storageManager.isObbMounted(expFile) || bugKitKat) {
+            if (bugKitKat) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(permission.READ_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        log.append("Request permission\n");
+                        requestPermissions(
+                            new String[] {permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+                        return;
+                    } else {
+                        log.append("Permission was already granted\n");
+                    }
+                }
+            }
+
+            initPath = DictionaryTraverse
+                .Init(bugKitKat ? expFile : storageManager.getMountedObbPath(expFile), bugKitKat);
+        } else if (waitMount == null) {
             waitMount = ProgressDialog.show(this, getString(R.string.mount_dlg_text), getString(R.string.mount_dlg_head), true);
             storageManager.mountObb(expFile, null, mStateListener);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+        int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                log.append("Permission granted\n");
+                if (!initPath) {
+                    log.append("Retrying\n");
+                    Mount();
+                }
+            } else {
+                log.append("Permission rejected\n");
+                Toast
+                    .makeText(this, getString(R.string.text_permission_required), Toast.LENGTH_LONG)
+                    .show();
+            }
         }
     }
 
@@ -321,7 +369,7 @@ public class EJLookupActivity extends Activity {
 
         String aboutTitle = String.format(context.getString(R.string.about_dlg_title), context.getString(R.string.app_name));
         String versionString = String.format(context.getString(R.string.about_dlg_version), versionInfo);
-        String aboutText = context.getString(R.string.about_dlg_sources);
+        String aboutText = log.toString();
  
         final TextView message = new TextView(context);
         final SpannableString s = new SpannableString(aboutText);
