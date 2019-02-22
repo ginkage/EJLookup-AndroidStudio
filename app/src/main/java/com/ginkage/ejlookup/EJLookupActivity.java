@@ -38,7 +38,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
+import com.google.android.vending.expansion.downloader.Helpers;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -65,9 +65,14 @@ public class EJLookupActivity extends Activity {
 
     public static String lastQuery = null;
 
-    private String getExpansionFileName() {
-        final String obbDir = getObbDir().getAbsolutePath() + File.separator;
-        return obbDir + "main.32." + getPackageName() + ".obb";
+    private boolean expansionFilesDelivered() {
+        expFile = null;
+        for (DictionaryDownloaderActivity.XAPKFile xf : DictionaryDownloaderActivity.xAPKS) {
+            String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
+            if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) return false;
+            if (xf.mIsMain) expFile = Helpers.generateSaveFileName(this, fileName);
+        }
+        return true;
     }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {
@@ -86,15 +91,16 @@ public class EJLookupActivity extends Activity {
         if (preferences == null)
             preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
-    
+
     private void setResults() {
-        final MyExpandableListAdapter adResults = new MyExpandableListAdapter(results.getContext(), new ArrayList<>(), new ArrayList<>());
+        final MyExpandableListAdapter adResults =
+                new MyExpandableListAdapter(
+                        results.getContext(), new ArrayList<>(), new ArrayList<>());
         adResults.setData(reslist);
 
         results.setAdapter(adResults);
         int i, groups = adResults.getGroupCount();
-        for (i = 0; i < groups; i++)
-            results.expandGroup(i);
+        for (i = 0; i < groups; i++) results.expandGroup(i);
         results.requestFocus();
     }
 
@@ -103,7 +109,10 @@ public class EJLookupActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        String theme = getPrefString(R.string.setting_theme_color, (android.os.Build.BRAND.equals("chromium") ? "1" : "0"));
+        String theme =
+                getPrefString(
+                        R.string.setting_theme_color,
+                        (android.os.Build.BRAND.equals("chromium") ? "1" : "0"));
         setTheme(theme.equals("1") ? R.style.AppThemeLight : R.style.AppTheme);
 
         super.onCreate(savedInstanceState);
@@ -115,29 +124,35 @@ public class EJLookupActivity extends Activity {
             Locale.setDefault(locale);
             Configuration config = new Configuration();
             config.locale = locale;
-            getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+            getBaseContext()
+                    .getResources()
+                    .updateConfiguration(
+                            config, getBaseContext().getResources().getDisplayMetrics());
         }
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
 
         setProgressBarIndeterminateVisibility(getResult != null);
-        if (getResult != null)
-            getResult.curContext = this;
+        if (getResult != null) getResult.curContext = this;
 
-        expFile = getExpansionFileName();
+        if (!expansionFilesDelivered()) {
+            startActivity(new Intent(EJLookupActivity.this, DictionaryDownloaderActivity.class));
+            finish();
+            return;
+        }
 
-        if (android.os.Build.BRAND.equals("chromium"))
-            bugKitKat = true;
+        if (android.os.Build.BRAND.equals("chromium")) bugKitKat = true;
 
         Nihongo.Init(getResources());
 
-        suggestions = new SearchRecentSuggestions(
-                this, SuggestionProvider.AUTHORITY, DATABASE_MODE_QUERIES);
+        suggestions =
+                new SearchRecentSuggestions(
+                        this, SuggestionProvider.AUTHORITY, DATABASE_MODE_QUERIES);
 
         storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 
         query = findViewById(R.id.editQuery);
@@ -149,49 +164,56 @@ public class EJLookupActivity extends Activity {
         query.setQueryRefinementEnabled(true);
         query.setIconifiedByDefault(false); // Do not iconify the widget; expand it by default
 
-        results.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
-            ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo)menuInfo;
-            if (ExpandableListView.getPackedPositionType(info.packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
-                menu.setHeaderTitle(getString(R.string.app_name));
-                menu.add(0, v.getId(), 0, getString(R.string.text_menu_copy));
-            }
-        });
+        results.setOnCreateContextMenuListener(
+                (menu, v, menuInfo) -> {
+                    ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo) menuInfo;
+                    if (ExpandableListView.getPackedPositionType(info.packedPosition)
+                            == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+                        menu.setHeaderTitle(getString(R.string.app_name));
+                        menu.add(0, v.getId(), 0, getString(R.string.text_menu_copy));
+                    }
+                });
 
-        if (reslist != null)
-            setResults();
+        if (reslist != null) setResults();
 
         query.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
 
-        query.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                searchClicked(search);
-                return true;
-            }
+        query.setOnQueryTextListener(
+                new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        searchClicked(search);
+                        return true;
+                    }
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                lastQuery = newText;
-                if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
-                    Mount();
-                }
-                return false;
-            }
-        });
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        lastQuery = newText;
+                        if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
+                            Mount();
+                        }
+                        return false;
+                    }
+                });
 
         search.setOnClickListener(this::searchClicked);
 
-        search.setOnLongClickListener(v -> {
-            CharSequence paste = clipboard.getText();
+        search.setOnLongClickListener(
+                v -> {
+                    CharSequence paste = clipboard.getText();
 
-            if (paste == null || paste.length() == 0)
-                Toast.makeText(EJLookupActivity.this, getString(R.string.text_clipboard_empty), Toast.LENGTH_LONG).show();
-            else {
-                query.setQuery(paste, true);
-            }
+                    if (paste == null || paste.length() == 0)
+                        Toast.makeText(
+                                        EJLookupActivity.this,
+                                        getString(R.string.text_clipboard_empty),
+                                        Toast.LENGTH_LONG)
+                                .show();
+                    else {
+                        query.setQuery(paste, true);
+                    }
 
-            return true;
-        });
+                    return true;
+                });
 
         handleIntent(getIntent());
     }
@@ -206,49 +228,59 @@ public class EJLookupActivity extends Activity {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String text = intent.getStringExtra(SearchManager.QUERY);
             query.setQuery(text, true);
-        }
+            }
     }
 
-    private final OnObbStateChangeListener mStateListener = new OnObbStateChangeListener() {
-        public void onObbStateChange(String path, int state) {
-            switch (state) {
-                case MOUNTED:
-                    initPath = DictionaryTraverse.Init(storageManager.getMountedObbPath(path), false);
-                    break;
-                case UNMOUNTED:
-                    break;
-                case ERROR_INTERNAL:
-                    break;
-                case ERROR_COULD_NOT_MOUNT:
-                    bugKitKat = true;
-                    break;
-                case ERROR_COULD_NOT_UNMOUNT:
-                    break;
-                case ERROR_NOT_MOUNTED:
-                    break;
-                case ERROR_ALREADY_MOUNTED:
-                    break;
-                case ERROR_PERMISSION_DENIED:
-                    break;
-                default:
-                    break;
-            }
+    private final OnObbStateChangeListener mStateListener =
+            new OnObbStateChangeListener() {
+                public void onObbStateChange(String path, int state) {
+                    switch (state) {
+                        case MOUNTED:
+                            initPath =
+                                    DictionaryTraverse.Init(
+                                            storageManager.getMountedObbPath(path), false);
+                            break;
+                        case UNMOUNTED:
+                            break;
+                        case ERROR_INTERNAL:
+                        case ERROR_COULD_NOT_MOUNT:
+                            bugKitKat = true;
+                            break;
+                        case ERROR_COULD_NOT_UNMOUNT:
+                            break;
+                        case ERROR_NOT_MOUNTED:
+                            break;
+                        case ERROR_ALREADY_MOUNTED:
+                            break;
+                        case ERROR_PERMISSION_DENIED:
+                            break;
+                        default:
+                            break;
+                    }
 
-            if (waitMount != null) {
-                waitMount.dismiss();
-                waitMount = null;
-            }
-        }
-    };
+                    if (waitMount != null) {
+                        waitMount.dismiss();
+                        waitMount = null;
+                    }
+                }
+            };
 
     void Mount() {
         initPath = false;
         keepMount = false;
 
         if (storageManager.isObbMounted(expFile) || bugKitKat)
-            initPath = DictionaryTraverse.Init(bugKitKat ? expFile : storageManager.getMountedObbPath(expFile), bugKitKat);
+            initPath =
+                    DictionaryTraverse.Init(
+                            bugKitKat ? expFile : storageManager.getMountedObbPath(expFile),
+                            bugKitKat);
         else if (waitMount == null) {
-            waitMount = ProgressDialog.show(this, getString(R.string.mount_dlg_text), getString(R.string.mount_dlg_head), true);
+            waitMount =
+                    ProgressDialog.show(
+                            this,
+                            getString(R.string.mount_dlg_text),
+                            getString(R.string.mount_dlg_head),
+                            true);
             storageManager.mountObb(expFile, null, mStateListener);
         }
     }
@@ -267,31 +299,35 @@ public class EJLookupActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        if (!expansionFilesDelivered()) {
+            finish();
+            return;
+        }
+
         Mount();
     }
 
     @Override
     protected void onStop() {
-        if (getResult != null)
-            getResult.curContext = null;
+        if (getResult != null) getResult.curContext = null;
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        if (!keepMount)
-            Unmount();
+        if (!keepMount) Unmount();
 
         super.onDestroy();
     }
 
     @Override
     protected Dialog onCreateDialog(int id) {
-        if (id == ID_DIALOG_ABOUT)
-            return createAboutDialog(this);
+        if (id == ID_DIALOG_ABOUT) return createAboutDialog(this);
         else if (id == ID_DIALOG_NODICT) {
             final TextView message = new TextView(this);
-            final SpannableString s = new SpannableString(getString(R.string.text_dictionary_missing));
+            final SpannableString s =
+                    new SpannableString(getString(R.string.text_dictionary_missing));
             message.setPadding(5, 5, 5, 5);
             message.setText(s);
             message.setGravity(Gravity.CENTER);
@@ -313,24 +349,30 @@ public class EJLookupActivity extends Activity {
         PackageInfo pInfo;
         String versionInfo = "0.01";
         try {
-            pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            pInfo =
+                    context.getPackageManager()
+                            .getPackageInfo(context.getPackageName(), PackageManager.GET_META_DATA);
             versionInfo = pInfo.versionName;
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }
 
-        String aboutTitle = String.format(context.getString(R.string.about_dlg_title), context.getString(R.string.app_name));
-        String versionString = String.format(context.getString(R.string.about_dlg_version), versionInfo);
+        String aboutTitle =
+                String.format(
+                        context.getString(R.string.about_dlg_title),
+                        context.getString(R.string.app_name));
+        String versionString =
+                String.format(context.getString(R.string.about_dlg_version), versionInfo);
         String aboutText = context.getString(R.string.about_dlg_sources);
- 
+
         final TextView message = new TextView(context);
         final SpannableString s = new SpannableString(aboutText);
- 
+
         message.setPadding(5, 5, 5, 5);
         message.setText(String.format("%s\n\n%s", versionString, s));
         message.setGravity(Gravity.CENTER);
         Linkify.addLinks(message, Linkify.ALL);
-     
+
         return new AlertDialog.Builder(context)
                 .setTitle(aboutTitle)
                 .setCancelable(true)
@@ -356,15 +398,13 @@ public class EJLookupActivity extends Activity {
         if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
             Toast.makeText(this, getString(R.string.text_mount_error), Toast.LENGTH_LONG).show();
             Mount();
-        }
-        else if (query.getQuery().length() == 0) {
+        } else if (query.getQuery().length() == 0) {
             Toast.makeText(this, getString(R.string.text_query_missing), Toast.LENGTH_LONG).show();
-        }
-        else if (getResult == null) {
+        } else if (getResult == null) {
             imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
 
             setProgressBarIndeterminateVisibility(true);
-            results.setAdapter((MyExpandableListAdapter)null);
+            results.setAdapter((MyExpandableListAdapter) null);
 
             reslist = null;
             getResult = new GetLookupResultsTask();
@@ -381,30 +421,25 @@ public class EJLookupActivity extends Activity {
 
         @Override
         protected ArrayList<ResultLine> doInBackground(String... args) {
-            if (args == null)
-                return null;
+            if (args == null) return null;
 
             String request = args[0];
 
             int font_size = 0;
             String fsize = getPrefString(R.string.setting_font_size, "0");
-            if (fsize.equals("1"))
-                font_size = 1;
-            else if (fsize.equals("2"))
-                font_size = 2;
+            if (fsize.equals("1")) font_size = 1;
+            else if (fsize.equals("2")) font_size = 2;
 
             int theme_color = 0;
             String theme = getPrefString(R.string.setting_theme_color, "0");
-            if (theme.equals("1"))
-                theme_color = 1;
+            if (theme.equals("1")) theme_color = 1;
 
             ResultLine.StartFill(font_size, theme_color);
             return DictionaryTraverse.getLookupResults(EJLookupActivity.this, request);
         }
 
         @Override
-        protected void onProgressUpdate(Integer... progress) {
-        }
+        protected void onProgressUpdate(Integer... progress) {}
 
         @Override
         protected void onPostExecute(ArrayList<ResultLine> lines) {
@@ -412,17 +447,28 @@ public class EJLookupActivity extends Activity {
 
             if (curContext != null) {
                 if (lines == null)
-                    Toast.makeText(getApplicationContext(), getString(R.string.text_error_unknown), Toast.LENGTH_LONG).show();
+                    Toast.makeText(
+                                    getApplicationContext(),
+                                    getString(R.string.text_error_unknown),
+                                    Toast.LENGTH_LONG)
+                            .show();
                 else if (lines.size() == 0) {
                     if (DictionaryTraverse.hasDicts)
-                        Toast.makeText(getApplicationContext(), getString(R.string.text_found_nothing), Toast.LENGTH_LONG).show();
-                    else
-                        curContext.showDialog(ID_DIALOG_NODICT);
+                        Toast.makeText(
+                                        getApplicationContext(),
+                                        getString(R.string.text_found_nothing),
+                                        Toast.LENGTH_LONG)
+                                .show();
+                    else curContext.showDialog(ID_DIALOG_NODICT);
                 } else {
                     if (lines.size() >= DictionaryTraverse.maxres)
-                        Toast.makeText(getApplicationContext(),
-                                String.format(getString(R.string.text_found_toomuch), DictionaryTraverse.maxres),
-                                Toast.LENGTH_LONG).show();
+                        Toast.makeText(
+                                        getApplicationContext(),
+                                        String.format(
+                                                getString(R.string.text_found_toomuch),
+                                                DictionaryTraverse.maxres),
+                                        Toast.LENGTH_LONG)
+                                .show();
 
                     curContext.setResults();
                 }
@@ -447,21 +493,17 @@ public class EJLookupActivity extends Activity {
             if (item.getItemId() == R.id.itemSettings) {
                 Intent i = new Intent(EJLookupActivity.this, Settings.class);
                 startActivity(i);
-            }
-            else if (item.getItemId() == R.id.itemAbout)
-                showDialog(ID_DIALOG_ABOUT);
+            } else if (item.getItemId() == R.id.itemAbout) showDialog(ID_DIALOG_ABOUT);
             return true;
-        }
-        else if (featureId == Window.FEATURE_CONTEXT_MENU) {
+        } else if (featureId == Window.FEATURE_CONTEXT_MENU) {
             ContextMenuInfo menuInfo = item.getMenuInfo();
             if (menuInfo instanceof ExpandableListContextMenuInfo) {
-                ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo)item.getMenuInfo();
+                ExpandableListContextMenuInfo info =
+                        (ExpandableListContextMenuInfo) item.getMenuInfo();
                 TextView textView = (TextView) info.targetView;
                 clipboard.setText(textView.getText().toString());
             }
             return true;
-        }
-        else
-            return false;
+        } else return false;
     }
 }

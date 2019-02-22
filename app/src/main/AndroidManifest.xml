@@ -29,6 +29,9 @@
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
         <activity android:name=".Settings" android:label="@string/text_menu_settings" />
+        <activity android:name=".DictionaryDownloaderActivity" android:label="@string/text_dictionary_download" />
+        <service android:name=".DictionaryDownloaderService" />
+        <receiver android:name=".DictionaryAlarmReceiver" />
 
       	<uses-library android:required="false" android:name="com.sec.android.app.multiwindow" />
         <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
@@ -38,6 +41,7 @@
         <meta-data android:name="com.sec.android.multiwindow.MINIMUM_SIZE_H" android:value="598.0dip" />
 
         <provider android:name=".SuggestionProvider"
-                  android:authorities="com.ginkage.ejlookup.suggest" />
+                  android:authorities="com.ginkage.ejlookup.suggest"
+                  android:exported="false"/>
     </application>
 </manifest>

@@ -22,14 +22,14 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
     private final HashMap<String, Integer> groupIdx = new HashMap<>();
     private ArrayList<ArrayList<ResultLine>> children;
 
-    public MyExpandableListAdapter(Context context, ArrayList<String> groups, ArrayList<ArrayList<ResultLine>> children) {
+    public MyExpandableListAdapter(
+            Context context, ArrayList<String> groups, ArrayList<ArrayList<ResultLine>> children) {
         this.context = context;
         this.groups = groups;
         this.children = children;
 
         int idx = 0;
-        for (String it : groups)
-            groupIdx.put(it, idx++);
+        for (String it : groups) groupIdx.put(it, idx++);
     }
 
     void addItem(ResultLine result) {
@@ -42,8 +42,7 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
             groupIdx.put(gname, index);
         }
 
-        if (children.size() < index + 1)
-            children.add(new ArrayList<>());
+        if (children.size() < index + 1) children.add(new ArrayList<>());
 
         children.get(index).add(result);
     }
@@ -56,7 +55,12 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
         return childPosition;
     }
 
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    public View getChildView(
+            int groupPosition,
+            int childPosition,
+            boolean isLastChild,
+            View convertView,
+            ViewGroup parent) {
         ResultLine result = (ResultLine) getChild(groupPosition, childPosition);
         TextView textView = new TextView(context);
         textView.setText(result.getData());
@@ -86,8 +90,9 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
         return groupPosition;
     }
 
-    public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        String group = (String)getGroup(groupPosition);
+    public View getGroupView(
+            int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+        String group = (String) getGroup(groupPosition);
         TextView textView = new TextView(context);
         textView.setGravity(Gravity.CENTER);
         textView.setMinLines(2);
@@ -112,7 +117,6 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     public void setData(ArrayList<ResultLine> data) {
-        for (ResultLine cit : data)
-            addItem(cit);
+        for (ResultLine cit : data) addItem(cit);
     }
-}
+    }

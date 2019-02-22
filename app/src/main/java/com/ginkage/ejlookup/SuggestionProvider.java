@@ -29,7 +29,7 @@ import static android.provider.BaseColumns._ID;
 public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     public static final String AUTHORITY = "com.ginkage.ejlookup.suggest";
     private static final String[] COLUMNS =
-            new String[]{_ID, SUGGEST_COLUMN_TEXT_1, SUGGEST_COLUMN_QUERY};
+            new String[] {_ID, SUGGEST_COLUMN_TEXT_1, SUGGEST_COLUMN_QUERY};
 
     private UriMatcher uriMatcher;
     private static final int URI_MATCH_SUGGEST = 1;
@@ -41,8 +41,12 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     }
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
-                        String sortOrder) {
+    public Cursor query(
+            Uri uri,
+            String[] projection,
+            String selection,
+            String[] selectionArgs,
+            String sortOrder) {
         if (uriMatcher.match(uri) == URI_MATCH_SUGGEST) {
             String text = selectionArgs[0];
             if (!TextUtils.isEmpty(text)) {
@@ -52,7 +56,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
                     int id = 0;
                     for (String res : suggest) {
                         id++;
-                        result.addRow(new Object[]{id, res, res});
+                        result.addRow(new Object[] {id, res, res});
                     }
                     if (id > 0) {
                         return result;
@@ -63,25 +67,32 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
         return super.query(uri, projection, selection, selectionArgs, sortOrder);
     }
 
-    private static int Tokenize(char[] text, int len, RandomAccessFile fileIdx,
-                                HashMap<String, Integer> suggest,
-                                String task,
-                                long sugPos) throws IOException {
+    private static int Tokenize(
+            char[] text,
+            int len,
+            RandomAccessFile fileIdx,
+            HashMap<String, Integer> suggest,
+            String task,
+            long sugPos)
+            throws IOException {
         int p, last = -1;
 
         for (p = 0; p < len; p++)
-            if (Nihongo.letter(text[p]) || (text[p] == '\'' && p > 0 && p+1 < len
-                    && Nihongo.letter(text[p-1]) && Nihongo.letter(text[p+1]))) {
+            if (Nihongo.letter(text[p])
+                    || (text[p] == '\''
+                            && p > 0
+                            && p + 1 < len
+                            && Nihongo.letter(text[p - 1])
+                            && Nihongo.letter(text[p + 1]))) {
                 if (last < 0) {
                     last = p;
                 }
-            }
-            else if (last >= 0) {
+            } else if (last >= 0) {
                 last = -1;
             }
 
         if (last >= 0) // Only search for the last word entered
-            Traverse(new String(text, last, p - last), fileIdx, 0, "", suggest, task, sugPos);
+        Traverse(new String(text, last, p - last), fileIdx, 0, "", suggest, task, sugPos);
 
         return last;
     }
@@ -91,8 +102,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
         final int freq;
 
         public final int compareTo(Pair other) {
-            if (this.freq != other.freq)
-                return other.freq - this.freq;
+            if (this.freq != other.freq) return other.freq - this.freq;
             return this.line.compareToIgnoreCase(other.line);
         }
 
@@ -102,14 +112,16 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
         }
     }
 
-    public static ArrayList<String> getLookupResults(
-            Context context, String request,
-            String task) {
+    public static ArrayList<String> getLookupResults(Context context, String request, String task) {
         ArrayList<String> result = null;
 
-        int maxsug = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.getString(R.string.setting_max_suggest), "10"));
-        boolean romanize = EJLookupActivity.getPrefBoolean(context.getString(R.string.setting_suggest_romaji), true);
+        int maxsug =
+                Integer.parseInt(
+                        PreferenceManager.getDefaultSharedPreferences(context)
+                                .getString(context.getString(R.string.setting_max_suggest), "10"));
+        boolean romanize =
+                EJLookupActivity.getPrefBoolean(
+                        context.getString(R.string.setting_suggest_romaji), true);
 
         char[] text = new char[request.length()];
         request.getChars(0, request.length(), text, 0);
@@ -131,8 +143,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
             if (DictionaryTraverse.bugKitKat) {
                 idx = new File(DictionaryTraverse.filePath);
                 sugPos = DictionaryTraverse.sugPos;
-            }
-            else {
+            } else {
                 idx = new File(DictionaryTraverse.filePath + "suggest.dat");
             }
 
@@ -193,8 +204,10 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     }
 
     private static int betole(int p) {
-        return ((p & 0x000000ff) << 24) + ((p & 0x0000ff00) << 8)
-                + ((p & 0x00ff0000) >>> 8) + ((p & 0xff000000) >>> 24);
+        return ((p & 0x000000ff) << 24)
+                + ((p & 0x0000ff00) << 8)
+                + ((p & 0x00ff0000) >>> 8)
+                + ((p & 0xff000000) >>> 24);
     }
 
     private static char shtoch(int p) {
@@ -202,10 +215,14 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     }
 
     private static boolean Traverse(
-            String word, RandomAccessFile fidx, long pos, String str,
+            String word,
+            RandomAccessFile fidx,
+            long pos,
+            String str,
             HashMap<String, Integer> suglist,
             String task,
-            long sugPos) throws IOException {
+            long sugPos)
+            throws IOException {
         if (!task.equals(EJLookupActivity.lastQuery)) return false;
         fidx.seek(pos + sugPos);
 
@@ -222,11 +239,9 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
             if (tlen > 0) {
                 if (unicode) {
                     char[] wbuf = new char[tlen];
-                    for (c = 0; c < tlen; c++)
-                        wbuf[c] = shtoch(fidx.readUnsignedShort());
+                    for (c = 0; c < tlen; c++) wbuf[c] = shtoch(fidx.readUnsignedShort());
                     nword = new String(wbuf);
-                }
-                else {
+                } else {
                     byte[] wbuf = new byte[tlen];
                     fidx.read(wbuf, 0, tlen);
                     nword = new String(wbuf);
@@ -241,8 +256,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
                 wlen--;
 
                 while (match < wlen && match < nlen) {
-                    if (word.charAt(match) != nword.charAt(match))
-                        break;
+                    if (word.charAt(match) != nword.charAt(match)) break;
                     match++;
                 }
             }
@@ -253,30 +267,36 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
             exact = exact && (match == nlen);
 
             if (children) // One way or the other, we'll need a full children list
-                do { // Read it from this location once, save for later
+            do { // Read it from this location once, save for later
                     ch = shtoch(fidx.readUnsignedShort());
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (ch == word.charAt(match)) {
-                            String newWord = word.substring(match, word.length()); // Traverse children
-                            return Traverse(newWord, fidx, (p & 0x7fffffff), str + ch, suglist, task, sugPos);
+                            String newWord =
+                                    word.substring(match, word.length()); // Traverse children
+                            return Traverse(
+                                    newWord,
+                                    fidx,
+                                    (p & 0x7fffffff),
+                                    str + ch,
+                                    suglist,
+                                    task,
+                                    sugPos);
                         }
-                    }
-                    else
-                        cpos.put(p & 0x7fffffff, ch);
+                    } else cpos.put(p & 0x7fffffff, ch);
                 } while ((p & 0x80000000) == 0);
 
             if (match == wlen) {
                 if (freq > 0 && !exact) {
                     Integer v = suglist.get(str);
-                    if (v == null)
-                        v = 0;
+                    if (v == null) v = 0;
                     v += freq;
                     suglist.put(str, v);
                 }
 
-                for (int child_pos : cpos.keySet()) // Traverse everything that begins with this word
-                    Traverse("", fidx, child_pos, str + cpos.get(child_pos), suglist, task, sugPos);
+                for (int child_pos :
+                        cpos.keySet()) // Traverse everything that begins with this word
+                Traverse("", fidx, child_pos, str + cpos.get(child_pos), suglist, task, sugPos);
 
                 return true; // Got result
             }

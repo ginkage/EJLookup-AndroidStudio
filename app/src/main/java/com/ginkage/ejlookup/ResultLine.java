@@ -23,19 +23,15 @@ class ResultLine {
         resmax = 250;
     }
 
-    static private void addSubstr(StringBuilder str, char[] text, int begin) {
+    private static void addSubstr(StringBuilder str, char[] text, int begin) {
         int i, len = text.length, end = -1;
-        for (i = begin; i < len && text[i] != 0; i++)
-            end = i;
-        if (end >= begin)
-            str.append(text, begin, end - begin + 1);
+        for (i = begin; i < len && text[i] != 0; i++) end = i;
+        if (end >= begin) str.append(text, begin, end - begin + 1);
     }
 
-    static private int strchr(char[] text, int begin, char c) {
+    private static int strchr(char[] text, int begin, char c) {
         int i, len = text.length;
-        for (i = begin; i < len && text[i] != 0; i++)
-            if (text[i] == c)
-                return i;
+        for (i = begin; i < len && text[i] != 0; i++) if (text[i] == c) return i;
         return -1;
     }
 
@@ -66,18 +62,12 @@ class ResultLine {
         int len = text.length;
 
         for (i = 0; i < len; i++)
-            if (i0 < 0 && text[i] == ')')
-                i0 = i;
-            else if (i1 < 0 && i3 < 0 && text[i] == '[')
-                i1 = i;
-            else if (i2 < 0 && i3 < 0 && text[i] == ']')
-                i2 = i;
-            else if (i4 < 0 && i3 < 0 && text[i] == '{')
-                i4 = i;
-            else if (i5 < 0 && i3 < 0 && text[i] == '}')
-                i5 = i;
-            else if (i3 < 0 && text[i] == '/' && (i == 0 || text[i-1] != '<'))
-                i3 = i;
+            if (i0 < 0 && text[i] == ')') i0 = i;
+            else if (i1 < 0 && i3 < 0 && text[i] == '[') i1 = i;
+            else if (i2 < 0 && i3 < 0 && text[i] == ']') i2 = i;
+            else if (i4 < 0 && i3 < 0 && text[i] == '{') i4 = i;
+            else if (i5 < 0 && i3 < 0 && text[i] == '}') i5 = i;
+            else if (i3 < 0 && text[i] == '/' && (i == 0 || text[i - 1] != '<')) i3 = i;
 
         i0 = -1;
         sdict.append(this.group);
@@ -97,13 +87,12 @@ class ResultLine {
 
                 p = strchr(text, kana, '{');
                 if (p >= 0) {
-                    text[p-1] = '\0';
+                    text[p - 1] = '\0';
                     trans = p;
                 }
             }
             kd = true;
-        }
-        else {
+        } else {
             trans = i0 + 1;
             if (i1 >= 0 && i2 >= 0 && i1 < i2) {
                 text[i1] = '\0';
@@ -112,10 +101,9 @@ class ResultLine {
                 trans = i2 + 1;
                 if (i0 < i1) {
                     kanji = i0 + 1;
-                    while (kanji < len && text[kanji] == ' ')
-                        kanji++;
+                    while (kanji < len && text[kanji] == ' ') kanji++;
                 }
-            }
+                }
 
             if (i3 >= 0 && i3 > i0 && i3 > i1 && i3 > i2 && i3 > i4 && i3 > i5) {
                 if (kana < 0) kana = trans;
@@ -135,8 +123,7 @@ class ResultLine {
             while (end < len && text[end] != 0) end++;
             if (end > kanji) {
                 end--;
-                while (end > kanji && text[end] == ' ')
-                    text[end--] = '\0';
+                while (end > kanji && text[end] == ' ') text[end--] = '\0';
             }
             addSubstr(skanji, text, kanji);
         }
@@ -146,7 +133,10 @@ class ResultLine {
                 while (p < len && (text[p] == ' ' || text[p] == ',')) p++;
                 if (p < len && text[p] != 0) {
                     int begin = p, end = p - 1;
-                    while (p < len && text[p] != 0 && text[p] != ' ' && text[p] != ',') { end = p; p++; }
+                    while (p < len && text[p] != 0 && text[p] != ' ' && text[p] != ',') {
+                        end = p;
+                        p++;
+                    }
                     if (end >= begin) {
                         if (skana.length() > 0) skana.append('\n');
                         skana.append('[').append(new String(text, begin, end - begin + 1));
@@ -165,16 +155,17 @@ class ResultLine {
                 while (p < len && (text[p] == ' ' || text[p] == ',')) p++;
                 if (p < len && text[p] != 0) {
                     int begin = p, end = p - 1;
-                    while (p < len && text[p] != 0 && text[p] != ' ' && text[p] != ',') { end = p; p++; }
+                    while (p < len && text[p] != 0 && text[p] != ' ' && text[p] != ',') {
+                        end = p;
+                        p++;
+                    }
                     if (end >= begin) {
                         if (skana.length() > 0) skana.append('\n');
-                        skana.append('[')
-                                .append(text, begin, end - begin + 1)
-                                .append(']');
+                        skana.append('[').append(text, begin, end - begin + 1).append(']');
+                    }
                     }
                 }
             }
-        }
 
         if (trans >= 0) {
             if (kd) {
@@ -183,17 +174,19 @@ class ResultLine {
                     if (p < len && text[p] != 0) {
                         while (p < len && text[p] == ' ') p++;
                         int begin = p, end = p - 1;
-                        while (p < len && text[p] != 0 && text[p] != '{' && text[p] != '}') { end = p; p++; }
+                        while (p < len && text[p] != 0 && text[p] != '{' && text[p] != '}') {
+                            end = p;
+                            p++;
+                        }
                         if (end >= begin) {
                             if (strans.length() > 0) strans.append('\n');
                             strans.append(text, begin, end - begin + 1);
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (p = trans; p < len && text[p] != 0; p++) {
-                    if (text[p] == '/' && (p == trans || text[p-1] != '<')) {
+                    if (text[p] == '/' && (p == trans || text[p - 1] != '<')) {
                         text[p] = '\0';
                         p++;
                         while (trans < len && text[trans] == ' ') trans++;
@@ -227,7 +220,7 @@ class ResultLine {
             result.append(skana);
         }
         kanaend = result.length();
-        
+
         ArrayList<Span> italic = new ArrayList<>();
 
         if (strans.length() > 0) {
@@ -242,8 +235,7 @@ class ResultLine {
                 if (end < 0) {
                     result.append(strans.substring(begin + 3));
                     strans = new StringBuilder();
-                }
-                else {
+                } else {
                     result.append(strans.substring(begin + 3, end));
                     strans = new StringBuilder(strans.substring(end + 4));
                 }
@@ -255,18 +247,26 @@ class ResultLine {
 
         SpannableString res = new SpannableString(result);
 
-        if (font_size == 1)
-            res.setSpan(new RelativeSizeSpan(1.333333f), 0, res.length(), 0);
-        else if (font_size == 2)
-            res.setSpan(new RelativeSizeSpan(1.666666f), 0, res.length(), 0);
+        if (font_size == 1) res.setSpan(new RelativeSizeSpan(1.333333f), 0, res.length(), 0);
+        else if (font_size == 2) res.setSpan(new RelativeSizeSpan(1.666666f), 0, res.length(), 0);
 
         if (kanjistart >= 0) {
-            res.setSpan(new ForegroundColorSpan((theme_color == 0 ? Color.rgb(170, 127, 85) : Color.rgb(127, 63, 31))), kanjistart, kanjiend, 0);
+            res.setSpan(
+                    new ForegroundColorSpan(
+                            (theme_color == 0 ? Color.rgb(170, 127, 85) : Color.rgb(127, 63, 31))),
+                    kanjistart,
+                    kanjiend,
+                    0);
             res.setSpan(new RelativeSizeSpan(1.333333f), kanjistart, kanjiend, 0);
         }
 
         if (kanastart >= 0) {
-            res.setSpan(new ForegroundColorSpan((theme_color == 0 ? Color.rgb(42, 170, 170) : Color.rgb(31, 63, 63))), kanastart, kanaend, 0);
+            res.setSpan(
+                    new ForegroundColorSpan(
+                            (theme_color == 0 ? Color.rgb(42, 170, 170) : Color.rgb(31, 63, 63))),
+                    kanastart,
+                    kanaend,
+                    0);
         }
 
         if (transstart >= 0) {
@@ -293,7 +293,7 @@ class ResultLine {
     public SpannableString getData() {
         return data;
     }
-    
+
     public void setData(SpannableString data) {
         this.data = data;
     }
