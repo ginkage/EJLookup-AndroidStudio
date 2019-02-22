@@ -43,5 +43,4 @@
     <string name="setting_language">language</string>
 
     <string name="restart_msg">\nПриложение будет перезапущено для применения изменений.\n</string>
-    <string name="text_permission_required">Доступ к файлам необходим для загрузки словарей!</string>
 </resources>
