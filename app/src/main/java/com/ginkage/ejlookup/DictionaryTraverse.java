@@ -250,14 +250,14 @@ class DictionaryTraverse {
             TreeSet<Integer> spos = new TreeSet<>();
             int i, size = elines.size();
             for (i = 0; i < size; i++) {
-                Integer line = elines.keyAt(i);
-                Integer mask = elines.get(line);
+                int line = elines.keyAt(i);
+                int mask = elines.get(line);
                 if (mask + 1 == 1 << qwnum) {
                     spos.add(line);
                     if (plines != null) plines.delete(line);
                 } else if (plines != null) {
-                    Integer pmask = plines.get(line);
-                    if (pmask != null && ((mask | pmask) != pmask))
+                    int pmask = plines.get(line);
+                    if ((mask | pmask) != pmask)
                         plines.put(line, (pmask | mask));
                 }
             }
@@ -410,8 +410,8 @@ class DictionaryTraverse {
         if (match == nlen || match == wlen) {
             ArrayList<Integer> cpos = new ArrayList<>();
 
-            if (children) // One way or the other, we'll need a full children list
-            do { // Read it from this location once, save for later
+            if (children) { // One way or the other, we'll need a full children list
+                do { // Read it from this location once, save for later
                     c = shtoch(fidx.readUnsignedShort());
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
@@ -429,6 +429,7 @@ class DictionaryTraverse {
                         }
                     } else if (partial && child) cpos.add(p & 0x7fffffff);
                 } while ((p & 0x80000000) == 0);
+            }
 
             if (match == wlen) {
                 // Our search was successful, word ends here. We'll need all file positions and relatives
@@ -444,18 +445,22 @@ class DictionaryTraverse {
 
                 if (partial) {
                     ArrayList<Integer> ppos = new ArrayList<>();
-                    if (parents) // One way or the other, we'll need a full parents list
-                    do { // Read it from this location once, save for later
+                    if (parents) { // One way or the other, we'll need a full parents list
+                        do { // Read it from this location once, save for later
                             p = betole(fidx.readInt());
                             ppos.add(p & 0x7fffffff);
                         } while ((p & 0x80000000) == 0);
+                    }
 
-                    if (child)
-                        for (int it : cpos) // Traverse everything that begins with this word
-                        Traverse("", fidx, it, partial, true, poslist, idxPos);
+                    if (child) {
+                        for (int it : cpos) { // Traverse everything that begins with this word
+                            Traverse("", fidx, it, partial, true, poslist, idxPos);
+                        }
+                    }
 
-                    for (int it : ppos) // Traverse everything that fully has this word in it
-                    Traverse("", fidx, it, partial, false, poslist, idxPos);
+                    for (int it : ppos) { // Traverse everything that fully has this word in it
+                        Traverse("", fidx, it, partial, false, poslist, idxPos);
+                    }
                 }
 
                 return true; // Got result
