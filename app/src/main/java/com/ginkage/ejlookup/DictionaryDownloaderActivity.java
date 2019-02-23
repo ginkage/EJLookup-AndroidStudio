@@ -16,15 +16,6 @@
 
 package com.ginkage.ejlookup;
 
-import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
-import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
-import com.google.android.vending.expansion.downloader.DownloaderServiceMarshaller;
-import com.google.android.vending.expansion.downloader.Helpers;
-import com.google.android.vending.expansion.downloader.IDownloaderClient;
-import com.google.android.vending.expansion.downloader.IDownloaderService;
-import com.google.android.vending.expansion.downloader.IStub;
-
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -37,13 +28,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
+import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
+import com.google.android.vending.expansion.downloader.DownloaderServiceMarshaller;
+import com.google.android.vending.expansion.downloader.Helpers;
+import com.google.android.vending.expansion.downloader.IDownloaderClient;
+import com.google.android.vending.expansion.downloader.IDownloaderService;
+import com.google.android.vending.expansion.downloader.IStub;
 
 /**
  * This is sample code for a project built against the downloader library. It implements the
  * IDownloaderClient that the client marshaler will talk to as messages are delivered from the
  * DownloaderService.
  */
-public class DictionaryDownloaderActivity extends Activity implements IDownloaderClient {
+public class DictionaryDownloaderActivity extends AppCompatActivity implements IDownloaderClient {
     private static final String LOG_TAG = "LVLDownloader";
     private ProgressBar mPB;
 

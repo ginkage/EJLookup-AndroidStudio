@@ -1,6 +1,5 @@
 package com.ginkage.ejlookup;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,7 +10,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.widget.TextView;
-
+import androidx.appcompat.app.AlertDialog;
 import java.util.Locale;
 
 public class Settings extends PreferenceActivity {
@@ -46,7 +45,7 @@ public class Settings extends PreferenceActivity {
                             message.setGravity(Gravity.CENTER);
 
                             AlertDialog alertDialog =
-                                    new AlertDialog.Builder(ctx)
+                                    new androidx.appcompat.app.AlertDialog.Builder(ctx)
                                             .setTitle(getString(R.string.app_name))
                                             .setIcon(R.drawable.icon)
                                             .setPositiveButton(getString(android.R.string.ok), null)

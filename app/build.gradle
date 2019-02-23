@@ -27,3 +27,7 @@ android {
 
     useLibrary 'org.apache.http.legacy'
 }
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+}

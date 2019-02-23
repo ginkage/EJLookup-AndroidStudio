@@ -1,11 +1,12 @@
 package com.ginkage.ejlookup;
 
-import android.app.Activity;
-import android.app.AlertDialog;
+import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES;
+
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
+import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -34,17 +35,17 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
-import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import com.google.android.vending.expansion.downloader.Helpers;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES;
-
-public class EJLookupActivity extends Activity {
+public class EJLookupActivity extends AppCompatActivity {
     private static final int ID_DIALOG_ABOUT = 0;
     private static final int ID_DIALOG_NODICT = 1;
     private static ArrayList<ResultLine> reslist = null;
@@ -65,14 +66,14 @@ public class EJLookupActivity extends Activity {
 
     public static String lastQuery = null;
 
-    private boolean expansionFilesDelivered() {
+    private boolean expansionFilesMissing() {
         expFile = null;
         for (DictionaryDownloaderActivity.XAPKFile xf : DictionaryDownloaderActivity.xAPKS) {
             String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
-            if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) return false;
+            if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) return true;
             if (xf.mIsMain) expFile = Helpers.generateSaveFileName(this, fileName);
         }
-        return true;
+        return false;
     }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {
@@ -134,9 +135,9 @@ public class EJLookupActivity extends Activity {
         setContentView(R.layout.main);
 
         setProgressBarIndeterminateVisibility(getResult != null);
-        if (getResult != null) getResult.curContext = this;
+        if (getResult != null) getResult.curContext = new WeakReference<>(this);
 
-        if (!expansionFilesDelivered()) {
+        if (expansionFilesMissing()) {
             startActivity(new Intent(EJLookupActivity.this, DictionaryDownloaderActivity.class));
             finish();
             return;
@@ -159,10 +160,12 @@ public class EJLookupActivity extends Activity {
         results = findViewById(R.id.listResults);
         search = findViewById(R.id.buttonSearch);
 
-        SearchableInfo searchableInfo = searchManager.getSearchableInfo(getComponentName());
-        query.setSearchableInfo(searchableInfo);
-        query.setQueryRefinementEnabled(true);
-        query.setIconifiedByDefault(false); // Do not iconify the widget; expand it by default
+        if (searchManager != null) {
+            SearchableInfo searchableInfo = searchManager.getSearchableInfo(getComponentName());
+            query.setSearchableInfo(searchableInfo);
+            query.setQueryRefinementEnabled(true);
+            query.setIconifiedByDefault(false); // Do not iconify the widget; expand it by default
+        }
 
         results.setOnCreateContextMenuListener(
                 (menu, v, menuInfo) -> {
@@ -200,7 +203,11 @@ public class EJLookupActivity extends Activity {
 
         search.setOnLongClickListener(
                 v -> {
-                    CharSequence paste = clipboard.getText();
+                    CharSequence paste = null;
+                    ClipData clip = clipboard.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        paste = clip.getItemAt(0).coerceToText(this);
+                    }
 
                     if (paste == null || paste.length() == 0)
                         Toast.makeText(
@@ -300,7 +307,7 @@ public class EJLookupActivity extends Activity {
     protected void onStart() {
         super.onStart();
 
-        if (!expansionFilesDelivered()) {
+        if (expansionFilesMissing()) {
             finish();
             return;
         }
@@ -391,6 +398,24 @@ public class EJLookupActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.itemSettings) {
+            Intent i = new Intent(EJLookupActivity.this, Settings.class);
+            startActivity(i);
+        } else if (item.getItemId() == R.id.itemAbout) showDialog(ID_DIALOG_ABOUT);
+        else return false;
+        return true;
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        ContextMenuInfo menuInfo = item.getMenuInfo();
+        if (menuInfo instanceof ExpandableListContextMenuInfo) {
+            ExpandableListContextMenuInfo info =
+                    (ExpandableListContextMenuInfo) item.getMenuInfo();
+            TextView textView = (TextView) info.targetView;
+            clipboard.setPrimaryClip(ClipData.newPlainText(null,
+                    textView.getText().toString()));
+        } else return false;
         return true;
     }
 
@@ -407,8 +432,7 @@ public class EJLookupActivity extends Activity {
             results.setAdapter((MyExpandableListAdapter) null);
 
             reslist = null;
-            getResult = new GetLookupResultsTask();
-            getResult.curContext = this;
+            getResult = new GetLookupResultsTask(this);
 
             String text = query.getQuery().toString();
             suggestions.saveRecentQuery(text, null);
@@ -416,26 +440,32 @@ public class EJLookupActivity extends Activity {
         }
     }
 
-    private class GetLookupResultsTask extends AsyncTask<String, Integer, ArrayList<ResultLine>> {
-        private EJLookupActivity curContext;
+    private static class GetLookupResultsTask extends AsyncTask<String, Integer,
+            ArrayList<ResultLine>> {
+        private WeakReference<EJLookupActivity> curContext;
+
+        private GetLookupResultsTask(EJLookupActivity activity) {
+            curContext = new WeakReference<>(activity);
+        }
 
         @Override
         protected ArrayList<ResultLine> doInBackground(String... args) {
-            if (args == null) return null;
+            EJLookupActivity activity = curContext == null ? null : curContext.get();
+            if (args == null || activity == null) return null;
 
             String request = args[0];
 
             int font_size = 0;
-            String fsize = getPrefString(R.string.setting_font_size, "0");
+            String fsize = activity.getPrefString(R.string.setting_font_size, "0");
             if (fsize.equals("1")) font_size = 1;
             else if (fsize.equals("2")) font_size = 2;
 
             int theme_color = 0;
-            String theme = getPrefString(R.string.setting_theme_color, "0");
+            String theme = activity.getPrefString(R.string.setting_theme_color, "0");
             if (theme.equals("1")) theme_color = 1;
 
             ResultLine.StartFill(font_size, theme_color);
-            return DictionaryTraverse.getLookupResults(EJLookupActivity.this, request);
+            return DictionaryTraverse.getLookupResults(activity, request);
         }
 
         @Override
@@ -445,35 +475,36 @@ public class EJLookupActivity extends Activity {
         protected void onPostExecute(ArrayList<ResultLine> lines) {
             reslist = lines;
 
-            if (curContext != null) {
+            EJLookupActivity activity = curContext == null ? null : curContext.get();
+            if (activity != null) {
                 if (lines == null)
                     Toast.makeText(
-                                    getApplicationContext(),
-                                    getString(R.string.text_error_unknown),
+                                    activity.getApplicationContext(),
+                                    activity.getString(R.string.text_error_unknown),
                                     Toast.LENGTH_LONG)
                             .show();
                 else if (lines.size() == 0) {
                     if (DictionaryTraverse.hasDicts)
                         Toast.makeText(
-                                        getApplicationContext(),
-                                        getString(R.string.text_found_nothing),
+                                        activity.getApplicationContext(),
+                                        activity.getString(R.string.text_found_nothing),
                                         Toast.LENGTH_LONG)
                                 .show();
-                    else curContext.showDialog(ID_DIALOG_NODICT);
+                    else activity.showDialog(ID_DIALOG_NODICT);
                 } else {
                     if (lines.size() >= DictionaryTraverse.maxres)
                         Toast.makeText(
-                                        getApplicationContext(),
+                                        activity.getApplicationContext(),
                                         String.format(
-                                                getString(R.string.text_found_toomuch),
+                                                activity.getString(R.string.text_found_toomuch),
                                                 DictionaryTraverse.maxres),
                                         Toast.LENGTH_LONG)
                                 .show();
 
-                    curContext.setResults();
+                    activity.setResults();
                 }
 
-                curContext.setProgressBarIndeterminateVisibility(false);
+                activity.setProgressBarIndeterminateVisibility(false);
             }
 
             getResult = null;
@@ -481,29 +512,10 @@ public class EJLookupActivity extends Activity {
 
         @Override
         protected void onCancelled() {
-            if (curContext == null) return;
-            curContext.setProgressBarIndeterminateVisibility(false);
+            EJLookupActivity activity = curContext == null ? null : curContext.get();
+            if (activity == null) return;
+            activity.setProgressBarIndeterminateVisibility(false);
             getResult = null;
         }
-    }
-
-    @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        if (featureId == Window.FEATURE_OPTIONS_PANEL) {
-            if (item.getItemId() == R.id.itemSettings) {
-                Intent i = new Intent(EJLookupActivity.this, Settings.class);
-                startActivity(i);
-            } else if (item.getItemId() == R.id.itemAbout) showDialog(ID_DIALOG_ABOUT);
-            return true;
-        } else if (featureId == Window.FEATURE_CONTEXT_MENU) {
-            ContextMenuInfo menuInfo = item.getMenuInfo();
-            if (menuInfo instanceof ExpandableListContextMenuInfo) {
-                ExpandableListContextMenuInfo info =
-                        (ExpandableListContextMenuInfo) item.getMenuInfo();
-                TextView textView = (TextView) info.targetView;
-                clipboard.setText(textView.getText().toString());
-            }
-            return true;
-        } else return false;
     }
 }

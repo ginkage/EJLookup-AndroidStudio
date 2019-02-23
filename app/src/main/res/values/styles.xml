@@ -22,7 +22,7 @@
     </style>
 
     <style name="ButtonBackground">
-        <item name="android:background">@android:color/background_dark</item>
+        <item name="background">@android:color/background_dark</item>
     </style>
 
 </resources>
