@@ -28,8 +28,10 @@
             </intent-filter>
             <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
         </activity>
-        <activity android:name=".Settings" android:label="@string/text_menu_settings" />
-        <activity android:name=".DictionaryDownloaderActivity" android:label="@string/text_dictionary_download" />
+        <activity android:name=".Settings" android:label="@string/text_menu_settings"
+                  android:theme="@style/Theme.AppCompat" />
+        <activity android:name=".DictionaryDownloaderActivity" android:label="@string/text_dictionary_download"
+                  android:theme="@style/Theme.AppCompat" />
         <service android:name=".DictionaryDownloaderService" />
         <receiver android:name=".DictionaryAlarmReceiver" />
 
