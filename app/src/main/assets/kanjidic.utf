@@ -5280,7 +5280,7 @@
 蒭 685A U84ad B140 S13 S14 XN226 V5131 MN31598X MP9.0824 P2-3-10 I0a10.6 Q4442.7 ZRP2-4-10 Ychu2 Wchu シュウ ス スウ まぐさ {to cut grass} {hay} {fodder} 
 葮 685B U846e B140 S12 S13 V5114 MN31450X MP9.0805 P2-3-9 I3k9.8 Q4444.7 ZRP2-4-9 Yduan4 Wdan ダン タン むくげ {rose of Sharon} {althea} 
 蒂 685C U8482 B140 S12 S13 XJ06878 V5101 MN31495X MP9.0810 P2-3-9 I3k11.8 Q4422.7 ZRP2-4-9 Ydi4 Wche テイ タイ へた {peduncle} {stem of plants} 
-葩 685DU8469 B140 S12 S13 V5112 MN31441X MP9.0802 P2-3-9 I3k9.10 Q4461.7 ZRP2-4-9 Ypa1 Wpa ハ はな {flower} {petal} 
+葩 685D U8469 B140 S12 S13 V5112 MN31441X MP9.0802 P2-3-9 I3k9.10 Q4461.7 ZRP2-4-9 Ypa1 Wpa ハ はな {flower} {petal} 
 葆 685E U8446 B140 S12 S13 V5110 O1726 MN31381X MP9.0768 P2-3-9 I3k9.12 Q4429.4 ZRP2-4-9 Ybao3 Wbo ホウ ホ し.げる {dense growth} {keep} {adhere to} {conceal} 
 萬 685F U842c B140 G10 S12 XJ04B7C XN7 F2125 N3984 V5103 H2497 L2969 O1716 MN31339 MP9.0739 P2-3-9 I0a3.8 Q4442.7 Q4422.7 DR1953 ZRP2-4-9 Ywan4 Ymo4 Wman マン バン よろず T1 かず ま ゆる よし {ten thousand} {10,000} 
 葯 6860 U846f B140 S12 S13 V5115 MN31451 MP9.0805 P2-3-9 I3k9.4 Q4492.7 ZRP2-4-9 Yyao4 Wyag Wag ヤク {pollen pod at tip of stamen} {type of tall grass} 
@@ -5293,7 +5293,7 @@
 蒟 6867 U849f B140 S13 S14 N4016 V5150 MN31566X MP9.0821 P2-3-10 I3k10.3 Q4412.7 ZRP2-4-10 Yju3 Wgu コン ク {devil's tongue (plant)} 
 蓙 6868 U84d9 B140 S13 S14 N4008 V5142 MN31709X MP9.0852 P2-3-10 I3k10.28 Q4421.4 ZRP2-4-10 Wjwa ザ ござ {mat} {matting} {(kokuji)} 
 蓍 6869 U84cd B140 S13 S14 V5137 MN31655X MP9.0848 P2-3-10 I3k10.11 Q4460.1 ZRP2-4-10 Yshi1 Wsi シ めどぎ {yarrow} {sericea} {stalks used for divination} 
-蒻 686A U84bb B140 S13 S14 N4007 V5141 MN31623X MP9.0835 P2-3-10 I3k10. Q4422.7 ZRP2-4-10 Yruo4 Wyag ジャク ニャク {a kind of water plant} 
+蒻 686A U84bb B140 S13 S14 N4007 V5141 MN31623X MP9.0835 P2-3-10 I3k10.6 Q4422.7 ZRP2-4-10 Yruo4 Wyag ジャク ニャク {a kind of water plant} 
 蓚 686B U84da B140 S13 S14 N4012 V5146 MN49606X MP9.0852 P2-3-10 I3k10.9 Q4422.2 ZRP2-4-10 Yxiu1 Wsu Wjo シュウ {(used only in compounds)} 
 蓐 686C U84d0 B140 S13 S14 N4015 V5149 MN31660X MP9.0849 P2-3-10 I3k10.30 Q4424.3 ZRP2-4-10 Yru4 Wyog ジョク ニク しとね {bed} 
 蓁 686D U84c1 B140 S13 S14 V5134 O1984 MN31639X MP9.0842 P2-3-10 I3k10.17 Q4490.4 ZRP2-4-10 Yzhen1 Wjin シン {dense growth} {thicket} 
@@ -6354,4 +6354,3 @@
 瑤 7424 U7464 B96 S14 XJ06076 V3666 H1061 MN21149 MP7.0155 P1-4-10 I4f9.5 Q1717.2 Yyao2 Wyo ヨウ たま {beautiful (as a jewel)} 
 凜 7425 U51dc B15 G9 S15 XJ0515B J1 V429 DK126 MN1717 MP00.0000 IN2026 P1-2-13 I2b13.1 Q3019.0 Ylin3 Wreum リン きびし.い {cold} {strict} {severe} 
 熙 7426 U7199 B86 G9 S15 XJ05F66 XJ05F67 J1 V3464 DK1837 IN2148 P2-11-4 I4d9.11 Q7733.0 Yxi1 Wheui キ たのし.む ひか.る ひろ.い よろこ.ぶ かわ.く あきらか ひろ.める ひろ.まる {bright} {sunny} {prosperous} {merry} 
- 
