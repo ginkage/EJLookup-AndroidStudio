@@ -1,9 +1,11 @@
 package com.ginkage.ejlookup;
 
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+
 import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class DictionaryFile {
     private final byte[] scratch = new byte[8];
@@ -11,20 +13,21 @@ public class DictionaryFile {
     private final AssetManager assetManager;
     private final String fileName;
     private final long size;
-    private InputStream inputStream;
+    private AssetFileDescriptor afd;
+    private FileInputStream inputStream;
     private long currentPos = 0;
 
     public DictionaryFile(AssetManager assetManager, String fileName) throws IOException {
         this.assetManager = assetManager;
         this.fileName = fileName;
-        this.inputStream = assetManager.open(fileName);
-        this.size = inputStream.available();
+        open();
+        this.size = afd.getDeclaredLength();
     }
 
     public void seek(long pos) throws IOException {
         if (pos < currentPos) {
-            inputStream.close();
-            inputStream = assetManager.open(fileName);
+            close();
+            open();
             currentPos = inputStream.skip(pos);
         } else {
             currentPos += inputStream.skip(pos - currentPos);
@@ -82,6 +85,7 @@ public class DictionaryFile {
 
     public void close() throws IOException {
         inputStream.close();
+        afd.close();
     }
 
     public String readLine() throws IOException {
@@ -112,6 +116,11 @@ public class DictionaryFile {
             return null;
         }
         return input.toString();
+    }
+
+    private void open() throws IOException {
+        afd = assetManager.openFd(fileName);
+        inputStream = afd.createInputStream();
     }
 
     private long length() {
