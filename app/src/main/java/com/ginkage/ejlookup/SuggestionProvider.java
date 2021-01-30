@@ -9,11 +9,8 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,7 +67,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     private static int Tokenize(
             char[] text,
             int len,
-            RandomAccessFile fileIdx,
+            DictionaryFile fileIdx,
             HashMap<String, Integer> suggest,
             String task,
             long sugPos)
@@ -137,14 +134,8 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
 
         int last = -1;
         try {
-            File idx;
             long sugPos = 0;
-
-            idx = new File(DictionaryTraverse.filePath + "suggest.dat");
-
-            if (!idx.exists()) return null;
-            RandomAccessFile fileIdx = new RandomAccessFile(idx.getAbsolutePath(), "r");
-
+            DictionaryFile fileIdx = new DictionaryFile(context.getAssets(), "suggest.dat");
             last = Tokenize(text, qlen, fileIdx, suggest, task, sugPos);
             if (!Arrays.equals(text, kanatext))
                 Tokenize(kanatext, klen, fileIdx, suggest, task, sugPos);
@@ -211,7 +202,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
 
     private static boolean Traverse(
             String word,
-            RandomAccessFile fidx,
+            DictionaryFile fidx,
             long pos,
             String str,
             HashMap<String, Integer> suglist,
