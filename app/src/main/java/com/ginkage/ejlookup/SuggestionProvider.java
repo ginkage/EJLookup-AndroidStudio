@@ -31,7 +31,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     private static final String[] COLUMNS =
             new String[] {_ID, SUGGEST_COLUMN_TEXT_1, SUGGEST_COLUMN_QUERY};
 
-    private UriMatcher uriMatcher;
+    private final UriMatcher uriMatcher;
     private static final int URI_MATCH_SUGGEST = 1;
 
     public SuggestionProvider() {
@@ -140,12 +140,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
             File idx;
             long sugPos = 0;
 
-            if (DictionaryTraverse.bugKitKat) {
-                idx = new File(DictionaryTraverse.filePath);
-                sugPos = DictionaryTraverse.sugPos;
-            } else {
-                idx = new File(DictionaryTraverse.filePath + "suggest.dat");
-            }
+            idx = new File(DictionaryTraverse.filePath + "suggest.dat");
 
             if (!idx.exists()) return null;
             RandomAccessFile fileIdx = new RandomAccessFile(idx.getAbsolutePath(), "r");
@@ -272,8 +267,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (ch == word.charAt(match)) {
-                            String newWord =
-                                    word.substring(match, word.length()); // Traverse children
+                            String newWord = word.substring(match); // Traverse children
                             return Traverse(
                                     newWord,
                                     fidx,

@@ -1,9 +1,6 @@
 package com.ginkage.ejlookup;
 
-import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES;
-
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
 import android.content.ClipData;
@@ -17,8 +14,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.storage.OnObbStateChangeListener;
-import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
 import android.provider.SearchRecentSuggestions;
 import android.text.SpannableString;
@@ -40,41 +35,26 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
-import com.google.android.vending.expansion.downloader.Helpers;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES;
 
 public class EJLookupActivity extends AppCompatActivity {
     private static final int ID_DIALOG_ABOUT = 0;
     private static final int ID_DIALOG_NODICT = 1;
     private static ArrayList<ResultLine> reslist = null;
     private static GetLookupResultsTask getResult = null;
-    public static boolean keepMount = false;
     private static SharedPreferences preferences = null;
     private SearchView query = null;
     private Button search = null;
     private ExpandableListView results = null;
-    private StorageManager storageManager = null;
     private ClipboardManager clipboard = null;
     private InputMethodManager imm = null;
-    private String expFile = null;
-    private ProgressDialog waitMount = null;
-    private boolean initPath = false;
-    private boolean bugKitKat = false;
     private SearchRecentSuggestions suggestions;
 
     public static String lastQuery = null;
-
-    private boolean expansionFilesMissing() {
-        expFile = null;
-        for (DictionaryDownloaderActivity.XAPKFile xf : DictionaryDownloaderActivity.xAPKS) {
-            String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
-            if (!Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) return true;
-            if (xf.mIsMain) expFile = Helpers.generateSaveFileName(this, fileName);
-        }
-        return false;
-    }
 
     public static boolean getPrefBoolean(String key, boolean defValue) {
         return preferences.getBoolean(key, defValue);
@@ -137,21 +117,12 @@ public class EJLookupActivity extends AppCompatActivity {
         setProgressBarIndeterminateVisibility(getResult != null);
         if (getResult != null) getResult.curContext = new WeakReference<>(this);
 
-        if (expansionFilesMissing()) {
-            startActivity(new Intent(EJLookupActivity.this, DictionaryDownloaderActivity.class));
-            finish();
-            return;
-        }
-
-        if (android.os.Build.BRAND.equals("chromium")) bugKitKat = true;
-
         Nihongo.Init(getResources());
 
         suggestions =
                 new SearchRecentSuggestions(
                         this, SuggestionProvider.AUTHORITY, DATABASE_MODE_QUERIES);
 
-        storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
@@ -192,9 +163,6 @@ public class EJLookupActivity extends AppCompatActivity {
                     @Override
                     public boolean onQueryTextChange(String newText) {
                         lastQuery = newText;
-                        if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
-                            Mount();
-                        }
                         return false;
                     }
                 });
@@ -225,107 +193,17 @@ public class EJLookupActivity extends AppCompatActivity {
         handleIntent(getIntent());
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        setIntent(intent);
-        handleIntent(intent);
-    }
-
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String text = intent.getStringExtra(SearchManager.QUERY);
             query.setQuery(text, true);
-            }
-    }
-
-    private final OnObbStateChangeListener mStateListener =
-            new OnObbStateChangeListener() {
-                public void onObbStateChange(String path, int state) {
-                    switch (state) {
-                        case MOUNTED:
-                            initPath =
-                                    DictionaryTraverse.Init(
-                                            storageManager.getMountedObbPath(path), false);
-                            break;
-                        case UNMOUNTED:
-                            break;
-                        case ERROR_INTERNAL:
-                        case ERROR_COULD_NOT_MOUNT:
-                            bugKitKat = true;
-                            break;
-                        case ERROR_COULD_NOT_UNMOUNT:
-                            break;
-                        case ERROR_NOT_MOUNTED:
-                            break;
-                        case ERROR_ALREADY_MOUNTED:
-                            break;
-                        case ERROR_PERMISSION_DENIED:
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (waitMount != null) {
-                        waitMount.dismiss();
-                        waitMount = null;
-                    }
-                }
-            };
-
-    void Mount() {
-        initPath = false;
-        keepMount = false;
-
-        if (storageManager.isObbMounted(expFile) || bugKitKat)
-            initPath =
-                    DictionaryTraverse.Init(
-                            bugKitKat ? expFile : storageManager.getMountedObbPath(expFile),
-                            bugKitKat);
-        else if (waitMount == null) {
-            waitMount =
-                    ProgressDialog.show(
-                            this,
-                            getString(R.string.mount_dlg_text),
-                            getString(R.string.mount_dlg_head),
-                            true);
-            storageManager.mountObb(expFile, null, mStateListener);
         }
-    }
-
-    void Unmount() {
-        if (storageManager != null && storageManager.isObbMounted(expFile))
-            storageManager.unmountObb(expFile, false, mStateListener);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        keepMount = true;
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        if (expansionFilesMissing()) {
-            finish();
-            return;
-        }
-
-        Mount();
     }
 
     @Override
     protected void onStop() {
         if (getResult != null) getResult.curContext = null;
         super.onStop();
-    }
-
-    @Override
-    public void onDestroy() {
-        if (!keepMount) Unmount();
-
-        super.onDestroy();
     }
 
     @Override
@@ -420,10 +298,7 @@ public class EJLookupActivity extends AppCompatActivity {
     }
 
     public void searchClicked(View v) {
-        if (!initPath || (!bugKitKat && !storageManager.isObbMounted(expFile))) {
-            Toast.makeText(this, getString(R.string.text_mount_error), Toast.LENGTH_LONG).show();
-            Mount();
-        } else if (query.getQuery().length() == 0) {
+        if (query.getQuery().length() == 0) {
             Toast.makeText(this, getString(R.string.text_query_missing), Toast.LENGTH_LONG).show();
         } else if (getResult == null) {
             imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
@@ -484,13 +359,11 @@ public class EJLookupActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG)
                             .show();
                 else if (lines.size() == 0) {
-                    if (DictionaryTraverse.hasDicts)
-                        Toast.makeText(
-                                        activity.getApplicationContext(),
-                                        activity.getString(R.string.text_found_nothing),
-                                        Toast.LENGTH_LONG)
-                                .show();
-                    else activity.showDialog(ID_DIALOG_NODICT);
+                    Toast.makeText(
+                                    activity.getApplicationContext(),
+                                    activity.getString(R.string.text_found_nothing),
+                                    Toast.LENGTH_LONG)
+                            .show();
                 } else {
                     if (lines.size() >= DictionaryTraverse.maxres)
                         Toast.makeText(

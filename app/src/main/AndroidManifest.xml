@@ -30,10 +30,8 @@
         </activity>
         <activity android:name=".Settings" android:label="@string/text_menu_settings"
                   android:theme="@style/Theme.AppCompat" />
-        <activity android:name=".DictionaryDownloaderActivity" android:label="@string/text_dictionary_download"
-                  android:theme="@style/Theme.AppCompat" />
+
         <service android:name=".DictionaryDownloaderService" />
-        <receiver android:name=".DictionaryAlarmReceiver" />
 
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 

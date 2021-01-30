@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "28.0.3"
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.ginkage.ejlookup"
-        versionCode 39
-        versionName "1.7"
+        versionCode 40
+        versionName "1.7.1"
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 30
     }
 
     compileOptions {
@@ -24,10 +24,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
-    useLibrary 'org.apache.http.legacy'
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
 }

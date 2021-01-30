@@ -54,7 +54,6 @@ public class Settings extends PreferenceActivity {
 
                             alertDialog.setOnDismissListener(
                                     dialog -> {
-                                        EJLookupActivity.keepMount = true;
                                         Intent i =
                                                 getBaseContext()
                                                         .getPackageManager()
@@ -80,8 +79,7 @@ public class Settings extends PreferenceActivity {
 
         int i = 0;
         for (String fileName : DictionaryTraverse.fileList) {
-            boolean exists =
-                    DictionaryTraverse.checkExists(fileName) || DictionaryTraverse.bugKitKat;
+            boolean exists = DictionaryTraverse.checkExists(fileName);
             boolean checked = EJLookupActivity.getPrefBoolean(fileName, true);
 
             CheckBoxPreference cb = new CheckBoxPreference(this);
