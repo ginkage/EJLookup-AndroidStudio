@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.ginkage.ejlookup"
-        versionCode 41
-        versionName "1.8.0"
+        versionCode 42
+        versionName "1.8.1"
         minSdkVersion 14
         targetSdkVersion 30
     }

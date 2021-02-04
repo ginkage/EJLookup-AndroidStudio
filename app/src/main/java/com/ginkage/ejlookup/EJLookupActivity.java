@@ -43,7 +43,6 @@ import static android.content.SearchRecentSuggestionsProvider.DATABASE_MODE_QUER
 
 public class EJLookupActivity extends AppCompatActivity {
     private static final int ID_DIALOG_ABOUT = 0;
-    private static final int ID_DIALOG_NODICT = 1;
     private static ArrayList<ResultLine> reslist = null;
     private static GetLookupResultsTask getResult = null;
     private static SharedPreferences preferences = null;
@@ -193,6 +192,12 @@ public class EJLookupActivity extends AppCompatActivity {
         handleIntent(getIntent());
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+        super.onNewIntent(intent);
+    }
+
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String text = intent.getStringExtra(SearchManager.QUERY);
@@ -209,23 +214,6 @@ public class EJLookupActivity extends AppCompatActivity {
     @Override
     protected Dialog onCreateDialog(int id) {
         if (id == ID_DIALOG_ABOUT) return createAboutDialog(this);
-        else if (id == ID_DIALOG_NODICT) {
-            final TextView message = new TextView(this);
-            final SpannableString s =
-                    new SpannableString(getString(R.string.text_dictionary_missing));
-            message.setPadding(5, 5, 5, 5);
-            message.setText(s);
-            message.setGravity(Gravity.CENTER);
-
-            return new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.app_name))
-                    .setCancelable(true)
-                    .setIcon(R.drawable.icon)
-                    .setPositiveButton(getString(android.R.string.ok), null)
-                    .setView(message)
-                    .create();
-        }
-
         return super.onCreateDialog(id);
     }
 

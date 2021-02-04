@@ -142,15 +142,6 @@ class DictionaryTraverse {
         return wnum;
     }
 
-    public static boolean checkExists(String fileName) {
-        if (fileName.equals("suggest")) return (new File(filePath + fileName + ".dat")).exists();
-        else {
-            File idx = new File(filePath + fileName + ".idx");
-            File dic = new File(filePath + fileName + ".utf");
-            return idx.exists() && dic.exists();
-        }
-    }
-
     private static void LookupDict(
             AssetManager assetManager,
             String fileName,
