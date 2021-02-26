@@ -9,11 +9,8 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +28,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     private static final String[] COLUMNS =
             new String[] {_ID, SUGGEST_COLUMN_TEXT_1, SUGGEST_COLUMN_QUERY};
 
-    private UriMatcher uriMatcher;
+    private final UriMatcher uriMatcher;
     private static final int URI_MATCH_SUGGEST = 1;
 
     public SuggestionProvider() {
@@ -70,7 +67,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
     private static int Tokenize(
             char[] text,
             int len,
-            RandomAccessFile fileIdx,
+            DictionaryFile fileIdx,
             HashMap<String, Integer> suggest,
             String task,
             long sugPos)
@@ -137,19 +134,8 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
 
         int last = -1;
         try {
-            File idx;
             long sugPos = 0;
-
-            if (DictionaryTraverse.bugKitKat) {
-                idx = new File(DictionaryTraverse.filePath);
-                sugPos = DictionaryTraverse.sugPos;
-            } else {
-                idx = new File(DictionaryTraverse.filePath + "suggest.dat");
-            }
-
-            if (!idx.exists()) return null;
-            RandomAccessFile fileIdx = new RandomAccessFile(idx.getAbsolutePath(), "r");
-
+            DictionaryFile fileIdx = new DictionaryFile(context.getAssets(), "suggest.dat");
             last = Tokenize(text, qlen, fileIdx, suggest, task, sugPos);
             if (!Arrays.equals(text, kanatext))
                 Tokenize(kanatext, klen, fileIdx, suggest, task, sugPos);
@@ -216,7 +202,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
 
     private static boolean Traverse(
             String word,
-            RandomAccessFile fidx,
+            DictionaryFile fidx,
             long pos,
             String str,
             HashMap<String, Integer> suglist,
@@ -272,8 +258,7 @@ public class SuggestionProvider extends SearchRecentSuggestionsProvider {
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (ch == word.charAt(match)) {
-                            String newWord =
-                                    word.substring(match, word.length()); // Traverse children
+                            String newWord = word.substring(match); // Traverse children
                             return Traverse(
                                     newWord,
                                     fidx,

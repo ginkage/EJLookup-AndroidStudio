@@ -103,7 +103,7 @@ class ResultLine {
                     kanji = i0 + 1;
                     while (kanji < len && text[kanji] == ' ') kanji++;
                 }
-                }
+            }
 
             if (i3 >= 0 && i3 > i0 && i3 > i1 && i3 > i2 && i3 > i4 && i3 > i5) {
                 if (kana < 0) kana = trans;

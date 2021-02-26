@@ -17,10 +17,10 @@ class MyExpandableListAdapter extends BaseExpandableListAdapter {
         return true;
     }
 
-    private Context context;
-    private ArrayList<String> groups;
+    private final Context context;
+    private final ArrayList<String> groups;
     private final HashMap<String, Integer> groupIdx = new HashMap<>();
-    private ArrayList<ArrayList<ResultLine>> children;
+    private final ArrayList<ArrayList<ResultLine>> children;
 
     public MyExpandableListAdapter(
             Context context, ArrayList<String> groups, ArrayList<ArrayList<ResultLine>> children) {

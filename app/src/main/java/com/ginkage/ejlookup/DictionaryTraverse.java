@@ -1,12 +1,12 @@
 package com.ginkage.ejlookup;
 
+import android.content.res.AssetManager;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +15,7 @@ import java.util.TreeSet;
 class DictionaryTraverse {
     public static String filePath;
     public static int maxres;
-    public static boolean hasDicts;
-    public static boolean bugKitKat = false;
+
     public static final String[] fileList = {
         "jr-edict",
         "warodai",
@@ -44,36 +43,6 @@ class DictionaryTraverse {
         "stardict",
         "concrete"
     };
-
-    public static final long[][] obbPos = {
-        {58879488, 59952640},
-        {78591488, 92777984},
-        {17778176, 37127680},
-        {60468736, 63186432},
-        {10823168, 15468032},
-        {7443968, 7550464},
-        {10253824, 10472960},
-        {7605760, 9393664},
-        {65170944, 65631744},
-        {56956416, 58342912},
-        {230912, 1103360},
-        {1472000, 1629696},
-        {1672704, 5295616},
-        {52721152, 54773248},
-        {55789056, 56098304},
-        {56167936, 56315392},
-        {56356352, 56546816},
-        {56598016, 56669696},
-        {56688128, 56892928},
-        {64388608, 64955904},
-        {65799680, 65920512},
-        {65957376, 66055680},
-        {66088448, 66174464},
-        {66199040, 66225664},
-        {10565120, 10757632},
-    };
-
-    public static final long sugPos = 66231808;
 
     public static final String[] fileDesc = {
         "Japanese-Russian electronic dictionary",
@@ -103,33 +72,13 @@ class DictionaryTraverse {
         "Gururaj Rao's Concrete Terminology Glossary"
     };
 
-    public static boolean Init(String expPath, boolean bug) {
-        bugKitKat = bug;
-        if (expPath == null) return false;
-
-        File dir = new File(expPath);
-
-        if (bugKitKat) {
-            filePath = dir.getAbsolutePath();
-            hasDicts = dir.exists();
-        } else {
-            filePath = dir.getAbsolutePath() + File.separator;
-            hasDicts = false;
-            for (int i = 0; i < fileList.length && !hasDicts; i++)
-                hasDicts |= checkExists(fileList[i]);
-        }
-
-        return hasDicts;
-    }
-
     private static void DoSearch(
             String query,
             int wnum,
-            RandomAccessFile fileIdx,
+            DictionaryFile fileIdx,
             SparseIntArray exact,
             SparseIntArray partial,
-            boolean kanji,
-            long idxPos)
+            boolean kanji)
             throws IOException {
         int mask = 1 << wnum;
         SparseBooleanArray lines = new SparseBooleanArray();
@@ -139,8 +88,7 @@ class DictionaryTraverse {
                 0,
                 (query.length() > 1 || kanji) && (partial != null),
                 true,
-                lines,
-                idxPos);
+                lines);
         int i, size = lines.size();
         for (i = 0; i < size; i++) {
             int k = lines.keyAt(i);
@@ -154,10 +102,9 @@ class DictionaryTraverse {
     private static int Tokenize(
             char[] text,
             int len,
-            RandomAccessFile fileIdx,
+            DictionaryFile fileIdx,
             SparseIntArray exact,
-            SparseIntArray partial,
-            long idxPos)
+            SparseIntArray partial)
             throws IOException {
         int p, last = -1, wnum = 0;
         boolean kanji = false;
@@ -178,8 +125,7 @@ class DictionaryTraverse {
                         fileIdx,
                         exact,
                         partial,
-                        kanji,
-                        idxPos);
+                        kanji);
                 kanji = false;
                 last = -1;
             }
@@ -191,57 +137,31 @@ class DictionaryTraverse {
                     fileIdx,
                     exact,
                     partial,
-                    kanji,
-                    idxPos);
+                    kanji);
 
         return wnum;
     }
 
-    public static boolean checkExists(String fileName) {
-        if (fileName.equals("suggest")) return (new File(filePath + fileName + ".dat")).exists();
-        else {
-            File idx = new File(filePath + fileName + ".idx");
-            File dic = new File(filePath + fileName + ".utf");
-            return idx.exists() && dic.exists();
-        }
-    }
-
     private static void LookupDict(
+            AssetManager assetManager,
             String fileName,
             TreeSet<String> sexact,
             TreeSet<String> spartial,
             char[] text,
             int qlen,
             char[] kanatext,
-            int klen,
-            int fileNum) {
+            int klen) {
         try {
-            File idx, dic;
-            boolean exists = true;
-            long idxPos = 0, utfPos = 0;
+            if (!EJLookupActivity.getPrefBoolean(fileName, true)) return;
 
-            if (bugKitKat) {
-                idx = dic = new File(filePath);
-                idxPos = obbPos[fileNum][0];
-                utfPos = obbPos[fileNum][1];
-                hasDicts = true;
-            } else {
-                idx = new File(filePath + fileName + ".idx");
-                dic = new File(filePath + fileName + ".utf");
-                exists = idx.exists() && dic.exists();
-                hasDicts |= exists;
-            }
-
-            if (!EJLookupActivity.getPrefBoolean(fileName, true) || !exists) return;
-
-            RandomAccessFile fileIdx = new RandomAccessFile(idx.getAbsolutePath(), "r");
+            DictionaryFile fileIdx = new DictionaryFile(assetManager, fileName + ".idx");
             SparseIntArray elines = new SparseIntArray();
             SparseIntArray plines = null;
             if (spartial != null) plines = new SparseIntArray();
 
-            int qwnum = Tokenize(text, qlen, fileIdx, elines, plines, idxPos);
+            int qwnum = Tokenize(text, qlen, fileIdx, elines, plines);
             if (!Arrays.equals(text, kanatext)) {
-                int kwnum = Tokenize(kanatext, klen, fileIdx, elines, plines, idxPos);
+                int kwnum = Tokenize(kanatext, klen, fileIdx, elines, plines);
                 if (qwnum < kwnum) qwnum = kwnum;
             }
 
@@ -262,11 +182,11 @@ class DictionaryTraverse {
                 }
             }
 
-            RandomAccessFile fileDic = new RandomAccessFile(dic.getAbsolutePath(), "r");
+            DictionaryFile fileDic = new DictionaryFile(assetManager, fileName + ".utf");
 
             for (int it : spos)
                 if (sexact.size() < maxres) {
-                    fileDic.seek(it + utfPos);
+                    fileDic.seek(it);
                     sexact.add(new String(fileDic.readLine().getBytes("ISO-8859-1"), "UTF-8"));
                 }
 
@@ -280,7 +200,7 @@ class DictionaryTraverse {
 
                 for (int it : spos)
                     if ((sexact.size() + spartial.size()) < maxres) {
-                        fileDic.seek(it + utfPos);
+                        fileDic.seek(it);
                         spartial.add(
                                 new String(fileDic.readLine().getBytes("ISO-8859-1"), "UTF-8"));
                     }
@@ -318,20 +238,19 @@ class DictionaryTraverse {
         @SuppressWarnings("unchecked")
         TreeSet<String>[] spartial = new TreeSet[fileList.length];
 
-        hasDicts = false;
         int i, etotal = 0, ptotal = 0;
         for (i = 0; i < fileList.length && etotal < maxres; i++) {
             spartial[i] = new TreeSet<>();
 
             LookupDict(
+                    context.getAssets(),
                     fileList[i],
                     sexact,
                     ((etotal + ptotal) < maxres ? spartial[i] : null),
                     text,
                     qlen,
                     kanatext,
-                    klen,
-                    i);
+                    klen);
 
             ptotal += spartial[i].size();
             etotal += sexact.size();
@@ -362,14 +281,13 @@ class DictionaryTraverse {
 
     private static boolean Traverse(
             String word,
-            RandomAccessFile fidx,
+            DictionaryFile fidx,
             long pos,
             boolean partial,
             boolean child,
-            SparseBooleanArray poslist,
-            long idxPos)
+            SparseBooleanArray poslist)
             throws IOException {
-        fidx.seek(pos + idxPos);
+        fidx.seek(pos);
 
         int tlen = fidx.readUnsignedByte();
         int c = fidx.readUnsignedByte();
@@ -416,16 +334,14 @@ class DictionaryTraverse {
                     p = betole(fidx.readInt());
                     if (match < wlen) { // (match == nlen), Traverse children
                         if (c == word.charAt(match)) {
-                            String newWord =
-                                    word.substring(match, word.length()); // Traverse children
+                            String newWord = word.substring(match); // Traverse children
                             return Traverse(
                                     newWord,
                                     fidx,
                                     (p & 0x7fffffff),
                                     partial,
                                     true,
-                                    poslist,
-                                    idxPos);
+                                    poslist);
                         }
                     } else if (partial && child) cpos.add(p & 0x7fffffff);
                 } while ((p & 0x80000000) == 0);
@@ -454,12 +370,12 @@ class DictionaryTraverse {
 
                     if (child) {
                         for (int it : cpos) { // Traverse everything that begins with this word
-                            Traverse("", fidx, it, partial, true, poslist, idxPos);
+                            Traverse("", fidx, it, partial, true, poslist);
                         }
                     }
 
                     for (int it : ppos) { // Traverse everything that fully has this word in it
-                        Traverse("", fidx, it, partial, false, poslist, idxPos);
+                        Traverse("", fidx, it, partial, false, poslist);
                     }
                 }
 
