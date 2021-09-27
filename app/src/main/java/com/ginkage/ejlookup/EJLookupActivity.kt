@@ -46,23 +46,17 @@ class EJLookupActivity : AppCompatActivity() {
   private var clipboard: ClipboardManager? = null
   private var imm: InputMethodManager? = null
   private var suggestions: SearchRecentSuggestions? = null
+
   fun getPrefString(key: Int, defValue: String?): String? {
     return preferences!!.getString(getString(key), defValue)
   }
 
   private fun setResults() {
-    val adResults = MyExpandableListAdapter(
-      results!!.context, ArrayList(), ArrayList()
-    )
+    val adResults = MyExpandableListAdapter(results!!.context, ArrayList(), ArrayList())
     adResults.setData(reslist)
     results!!.setAdapter(adResults)
-    var i: Int
-    val groups = adResults.groupCount
-    i = 0
-    while (i < groups) {
+    for (i in 0 until adResults.groupCount)
       results!!.expandGroup(i)
-      i++
-    }
     results!!.requestFocus()
   }
 
@@ -75,10 +69,10 @@ class EJLookupActivity : AppCompatActivity() {
     )
     setTheme(if (theme == "1") R.style.AppThemeLight else R.style.AppTheme)
     super.onCreate(savedInstanceState)
-    val def_lang = Locale.getDefault().language
-    val lang = getPrefString(R.string.setting_language, def_lang)
+    val defLang = Locale.getDefault().language
+    val lang = getPrefString(R.string.setting_language, defLang)
     if (lang != "0") {
-      val locale = Locale(lang)
+      val locale = Locale(lang!!)
       Locale.setDefault(locale)
       val config = Configuration()
       config.locale = locale
@@ -92,7 +86,7 @@ class EJLookupActivity : AppCompatActivity() {
     setContentView(R.layout.main)
     setProgressBarIndeterminateVisibility(getResult != null)
     if (getResult != null) getResult!!.curContext = WeakReference(this)
-    Nihongo.Init(resources)
+    Nihongo.init(resources)
     suggestions = SearchRecentSuggestions(
       this,
       SuggestionProvider.AUTHORITY,
@@ -118,11 +112,11 @@ class EJLookupActivity : AppCompatActivity() {
       }
     }
     if (reslist != null) setResults()
-    query!!.setImeOptions(EditorInfo.IME_ACTION_SEARCH)
+    query!!.imeOptions = EditorInfo.IME_ACTION_SEARCH
     query!!.setOnQueryTextListener(
       object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
-          searchClicked(search)
+          searchClicked()
           return true
         }
 
@@ -131,14 +125,14 @@ class EJLookupActivity : AppCompatActivity() {
           return false
         }
       })
-    search!!.setOnClickListener { v: View? -> searchClicked(v) }
+    search!!.setOnClickListener { searchClicked() }
     search!!.setOnLongClickListener {
       var paste: CharSequence? = null
       val clip = clipboard!!.primaryClip
       if (clip != null && clip.itemCount > 0) {
         paste = clip.getItemAt(0).coerceToText(this)
       }
-      if (paste == null || paste.length == 0) Toast.makeText(
+      if (paste == null || paste.isEmpty()) Toast.makeText(
         this@EJLookupActivity,
         getString(R.string.text_clipboard_empty),
         Toast.LENGTH_LONG
@@ -181,10 +175,14 @@ class EJLookupActivity : AppCompatActivity() {
   }
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
-    if (item.itemId == R.id.itemSettings) {
-      val i = Intent(this@EJLookupActivity, Settings::class.java)
-      startActivity(i)
-    } else if (item.itemId == R.id.itemAbout) showDialog(ID_DIALOG_ABOUT) else return false
+    when (item.itemId) {
+        R.id.itemSettings -> {
+          val i = Intent(this@EJLookupActivity, Settings::class.java)
+          startActivity(i)
+        }
+        R.id.itemAbout -> showDialog(ID_DIALOG_ABOUT)
+        else -> return false
+    }
     return true
   }
 
@@ -203,7 +201,7 @@ class EJLookupActivity : AppCompatActivity() {
     return true
   }
 
-  fun searchClicked(v: View?) {
+  fun searchClicked() {
     if (query!!.query.isEmpty()) {
       Toast.makeText(this, getString(R.string.text_query_missing), Toast.LENGTH_LONG).show()
     } else if (getResult == null) {
@@ -226,13 +224,13 @@ class EJLookupActivity : AppCompatActivity() {
       val activity = curContext?.get()
       if (args == null || activity == null) return null
       val request = args[0]
-      var font_size = 0
+      var fontSize = 0
       val fsize = activity.getPrefString(R.string.setting_font_size, "0")
-      if (fsize == "1") font_size = 1 else if (fsize == "2") font_size = 2
-      var theme_color = 0
+      if (fsize == "1") fontSize = 1 else if (fsize == "2") fontSize = 2
+      var themeColor = 0
       val theme = activity.getPrefString(R.string.setting_theme_color, "0")
-      if (theme == "1") theme_color = 1
-      ResultLine.StartFill(font_size, theme_color)
+      if (theme == "1") themeColor = 1
+      ResultLine.startFill(fontSize, themeColor)
       return DictionaryTraverse.getLookupResults(activity, request!!)
     }
 
@@ -242,28 +240,32 @@ class EJLookupActivity : AppCompatActivity() {
       reslist = lines
       val activity = curContext?.get()
       if (activity != null) {
-        if (lines == null) Toast.makeText(
-          activity.applicationContext,
-          activity.getString(R.string.text_error_unknown),
-          Toast.LENGTH_LONG
-        )
-          .show() else if (lines.size == 0) {
-          Toast.makeText(
-            activity.applicationContext,
-            activity.getString(R.string.text_found_nothing),
-            Toast.LENGTH_LONG
-          )
-            .show()
-        } else {
-          if (lines.size >= DictionaryTraverse.maxres) Toast.makeText(
-            activity.applicationContext, String.format(
-              activity.getString(R.string.text_found_toomuch),
-              DictionaryTraverse.maxres
-            ),
-            Toast.LENGTH_LONG
-          )
-            .show()
-          activity.setResults()
+        when {
+            lines == null -> Toast.makeText(
+                    activity.applicationContext,
+                    activity.getString(R.string.text_error_unknown),
+                    Toast.LENGTH_LONG
+            )
+                    .show()
+            lines.size == 0 -> {
+              Toast.makeText(
+                      activity.applicationContext,
+                      activity.getString(R.string.text_found_nothing),
+                      Toast.LENGTH_LONG
+              )
+                      .show()
+            }
+            else -> {
+              if (lines.size >= DictionaryTraverse.maxres) Toast.makeText(
+                      activity.applicationContext, String.format(
+                      activity.getString(R.string.text_found_toomuch),
+                      DictionaryTraverse.maxres
+              ),
+                      Toast.LENGTH_LONG
+              )
+                      .show()
+              activity.setResults()
+            }
         }
         activity.setProgressBarIndeterminateVisibility(false)
       }

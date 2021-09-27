@@ -7,7 +7,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.TreeSet
 
 internal object DictionaryTraverse {
@@ -69,7 +68,7 @@ internal object DictionaryTraverse {
   )
 
   @Throws(IOException::class)
-  private fun DoSearch(
+  private fun doSearch(
     query: String,
     wnum: Int,
     fileIdx: DictionaryFile,
@@ -79,7 +78,7 @@ internal object DictionaryTraverse {
   ) {
     val mask = 1 shl wnum
     val lines = SparseBooleanArray()
-    Traverse(
+    traverse(
       query,
       fileIdx,
       0,
@@ -99,7 +98,7 @@ internal object DictionaryTraverse {
   }
 
   @Throws(IOException::class)
-  private fun Tokenize(
+  private fun tokenize(
     text: CharArray,
     len: Int,
     fileIdx: DictionaryFile,
@@ -118,7 +117,7 @@ internal object DictionaryTraverse {
         if (last < 0) last = p
         if (text[p] >= '\u3200') kanji = true
       } else if (last >= 0) {
-        DoSearch(
+        doSearch(
           String(text, last, p - last),
           wnum++,
           fileIdx,
@@ -131,7 +130,7 @@ internal object DictionaryTraverse {
       }
       p++
     }
-    if (last >= 0) DoSearch(
+    if (last >= 0) doSearch(
       String(text, last, p - last),
       wnum++,
       fileIdx,
@@ -142,7 +141,7 @@ internal object DictionaryTraverse {
     return wnum
   }
 
-  private fun LookupDict(
+  private fun lookupDict(
     assetManager: AssetManager,
     fileName: String,
     sexact: TreeSet<String>,
@@ -160,9 +159,9 @@ internal object DictionaryTraverse {
       val elines = SparseIntArray()
       var plines: SparseIntArray? = null
       if (spartial != null) plines = SparseIntArray()
-      var qwnum = Tokenize(text, qlen, fileIdx, elines, plines)
-      if (!Arrays.equals(text, kanatext)) {
-        val kwnum = Tokenize(kanatext, klen, fileIdx, elines, plines)
+      var qwnum = tokenize(text, qlen, fileIdx, elines, plines)
+      if (!text.contentEquals(kanatext)) {
+        val kwnum = tokenize(kanatext, klen, fileIdx, elines, plines)
         if (qwnum < kwnum) qwnum = kwnum
       }
       fileIdx.close()
@@ -216,14 +215,14 @@ internal object DictionaryTraverse {
 
   fun getLookupResults(context: EJLookupActivity, request: String): ArrayList<ResultLine?> {
     maxres = context.getPrefString(R.string.setting_max_results, "100")!!.toInt()
-    val str_partial = context.getString(R.string.text_dictionary_partial)
+    val strPartial = context.getString(R.string.text_dictionary_partial)
     val text = CharArray(request.length)
     request.toCharArray(text, 0, 0, request.length)
-    val kanareq = Nihongo.Kanate(text)
+    val kanareq = Nihongo.kanate(text)
     val kanatext = CharArray(kanareq.length)
     kanareq.toCharArray(kanatext, 0, 0, kanareq.length)
-    val qlen = Nihongo.Normalize(text)
-    val klen = Nihongo.Normalize(kanatext)
+    val qlen = Nihongo.normalize(text)
+    val klen = Nihongo.normalize(kanatext)
     val result: ArrayList<ResultLine?> = ArrayList(maxres)
     val sexact = TreeSet<String>()
     val spartial: Array<TreeSet<String>?> = arrayOfNulls(fileList.size)
@@ -232,7 +231,7 @@ internal object DictionaryTraverse {
     var i = 0
     while (i < fileList.size && etotal < maxres) {
       spartial[i] = TreeSet()
-      LookupDict(
+      lookupDict(
         context.assets,
         fileList[i],
         sexact,
@@ -250,7 +249,7 @@ internal object DictionaryTraverse {
     }
     i = 0
     while (i < fileList.size && result.size < maxres) {
-      val partName = fileList[i] + str_partial
+      val partName = fileList[i] + strPartial
       for (st in spartial[i]!!) if (result.size < maxres) result.add(ResultLine(st, partName))
       i++
     }
@@ -269,7 +268,7 @@ internal object DictionaryTraverse {
   }
 
   @Throws(IOException::class)
-  private fun Traverse(
+  private fun traverse(
     what: String,
     fidx: DictionaryFile,
     pos: Long,
@@ -305,7 +304,7 @@ internal object DictionaryTraverse {
           nword = String(wbuf)
         } else {
           val wbuf = ByteArray(tlen)
-          fidx.read(wbuf, 0, tlen)
+          fidx.readBytes(wbuf, 0, tlen)
           nword = String(wbuf)
         }
         nlen = nword.length
@@ -324,7 +323,7 @@ internal object DictionaryTraverse {
           if (match < wlen) { // (match == nlen), Traverse children
             if (c == word[match].code) {
               val newWord = word.substring(match) // Traverse children
-              return Traverse(
+              return traverse(
                 newWord,
                 fidx,
                 (p and 0x7fffffff).toLong(),
@@ -357,11 +356,11 @@ internal object DictionaryTraverse {
           }
           if (child) {
             for (it in cpos) { // Traverse everything that begins with this word
-              Traverse("", fidx, it.toLong(), partial, true, poslist)
+              traverse("", fidx, it.toLong(), partial, true, poslist)
             }
           }
           for (it in ppos) { // Traverse everything that fully has this word in it
-            Traverse("", fidx, it.toLong(), partial, false, poslist)
+            traverse("", fidx, it.toLong(), partial, false, poslist)
           }
         }
         return true // Got result

@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseExpandableListAdapter
 import android.widget.TextView
-import com.ginkage.ejlookup.ResultLine
 import java.util.ArrayList
 import java.util.HashMap
 

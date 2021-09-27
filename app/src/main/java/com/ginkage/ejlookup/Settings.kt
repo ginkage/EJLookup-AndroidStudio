@@ -1,7 +1,6 @@
 package com.ginkage.ejlookup
 
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -13,8 +12,8 @@ import android.preference.PreferenceManager
 import android.view.Gravity
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import com.ginkage.ejlookup.EJLookupActivity
 import java.util.Locale
+import kotlin.system.exitProcess
 
 class Settings : PreferenceActivity() {
   var listener: OnSharedPreferenceChangeListener? = null
@@ -22,21 +21,21 @@ class Settings : PreferenceActivity() {
     val theme: String? =
       EJLookupActivity.getPrefString(getString(R.string.setting_theme_color), "0")
     setTheme(if (theme == "1") R.style.AppThemeLight else R.style.AppTheme)
-    val def_lang = Locale.getDefault().language
+    val defLang = Locale.getDefault().language
     val lang: String? =
-      EJLookupActivity.getPrefString(getString(R.string.setting_language), def_lang)
+      EJLookupActivity.getPrefString(getString(R.string.setting_language), defLang)
     val ctx: Context = this
     val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-    listener = OnSharedPreferenceChangeListener { prefs: SharedPreferences?, key: String ->
+    listener = OnSharedPreferenceChangeListener { _: SharedPreferences?, key: String ->
       if (key == getString(R.string.setting_theme_color) || key == getString(R.string.setting_language)) {
-        val new_theme: String? = EJLookupActivity.getPrefString(
+        val newTheme: String? = EJLookupActivity.getPrefString(
           getString(R.string.setting_theme_color), "0"
         )
-        val new_lang: String? = EJLookupActivity.getPrefString(
-          getString(R.string.setting_language), def_lang
+        val newLang: String? = EJLookupActivity.getPrefString(
+          getString(R.string.setting_language), defLang
         )
-        if (new_lang != lang && new_lang != "0"
-          || new_theme != theme
+        if (newLang != lang && newLang != "0"
+          || newTheme != theme
         ) {
           val message = TextView(ctx)
           message.text = getString(R.string.restart_msg) //"");
@@ -48,7 +47,7 @@ class Settings : PreferenceActivity() {
             .setPositiveButton(getString(android.R.string.ok), null)
             .setView(message)
             .create()
-          alertDialog.setOnDismissListener { dialog: DialogInterface? ->
+          alertDialog.setOnDismissListener {
             val i = baseContext
               .packageManager
               .getLaunchIntentForPackage(
@@ -56,7 +55,7 @@ class Settings : PreferenceActivity() {
               )
             i!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             startActivity(i)
-            System.exit(0)
+            exitProcess(0)
           }
           alertDialog.show()
         }

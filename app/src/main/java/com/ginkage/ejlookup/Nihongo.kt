@@ -3,41 +3,25 @@ package com.ginkage.ejlookup
 import android.content.res.Resources
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.ArrayList
 
 internal object Nihongo {
-  private lateinit var roma: Array<CharArray?>
-  private lateinit var kana: Array<CharArray?>
-  private val hashtab = CharArray(65536)
+  private lateinit var roma: Array<CharArray>
+  private lateinit var kana: Array<CharArray>
+  private val hashTab = CharArray(65536)
 
-  private fun readResource(res: Resources, id: Int): Array<CharArray?> {
+  private fun readResource(res: Resources, id: Int): Array<CharArray> {
     val dataIn = res.openRawResource(id)
     val isr = InputStreamReader(dataIn, "UTF-8")
     val br = BufferedReader(isr)
-    val lines = ArrayList<String>()
-    var line: String? = br.readLine()
-    while (line != null) {
-      lines.add(line)
-      line = br.readLine()
-    }
-    val table: Array<CharArray?> = arrayOfNulls(lines.size)
-    val it: Iterator<String> = lines.iterator()
-    var count = 0
-    while (it.hasNext()) {
-      line = it.next()
-      table[count] = CharArray(line.length)
-      line.toCharArray(table[count]!!, 0, 0, line.length)
-      count++
-    }
-    return table
+    return generateSequence { br.readLine() }.map { it.toCharArray() }.toList().toTypedArray()
   }
 
-  fun Init(res: Resources) {
+  fun init(res: Resources) {
     kana = readResource(res, R.raw.kanatab)
     roma = readResource(res, R.raw.romatab)
   }
 
-  private fun Jaiueoy(c: Char): Boolean {
+  private fun jAiueoy(c: Char): Boolean {
     return (c in '\u3041'..'\u304A'
       || c in '\u30A1'..'\u30AA'
       || c in '\u3083'..'\u3088'
@@ -48,7 +32,7 @@ internal object Nihongo {
     return c == 'a' || c == 'i' || c == 'u' || c == 'e' || c == 'o'
   }
 
-  private fun tolower(c: Char): Char {
+  private fun toLower(c: Char): Char {
     return if (c in 'A'..'Z' || c in '\u0410'..'\u042F') (c + 0x20) else c
   }
 
@@ -76,41 +60,41 @@ internal object Nihongo {
       cur = (a + b) / 2
       psub = 0
       pstr = offset
-      while (pstr < str.size && roma[cur]!![psub] != '=') {
-        if (tolower(str[pstr]) < roma[cur]!![psub]) {
+      while (pstr < str.size && roma[cur][psub] != '=') {
+        if (toLower(str[pstr]) < roma[cur][psub]) {
           b = cur
           break
-        } else if (tolower(str[pstr]) > roma[cur]!![psub]) {
+        } else if (toLower(str[pstr]) > roma[cur][psub]) {
           a = cur
           break
         }
         pstr++
         psub++
       }
-      if (roma[cur]!![psub++] == '=') return cur else if (pstr >= str.size) return -1
+      if (roma[cur][psub++] == '=') return cur else if (pstr >= str.size) return -1
     }
     psub = 0
     pstr = offset
-    while (pstr < str.size && roma[a]!![psub] != '=') {
-      if (tolower(str[pstr]) != roma[a]!![psub]) break
+    while (pstr < str.size && roma[a][psub] != '=') {
+      if (toLower(str[pstr]) != roma[a][psub]) break
       pstr++
       psub++
     }
-    if (roma[a]!![psub++] == '=') return a else if (pstr >= str.size) return -1
+    if (roma[a][psub++] == '=') return a else if (pstr >= str.size) return -1
     if (a != b) {
       psub = 0
       pstr = offset
-      while (pstr <= str.size && roma[b]!![psub] != '=') {
-        if (tolower(str[pstr]) != roma[b]!![psub]) break
+      while (pstr <= str.size && roma[b][psub] != '=') {
+        if (toLower(str[pstr]) != roma[b][psub]) break
         pstr++
         psub++
       }
-      if (roma[b]!![psub++] == '=') return b
+      if (roma[b][psub++] == '=') return b
     }
     return -1
   }
 
-  fun Kanate(text: CharArray): String {
+  fun kanate(text: CharArray): String {
     var pk = 0
     var pls = 0
     var prs: Int
@@ -121,13 +105,13 @@ internal object Nihongo {
     var pb = 0
     while (pb < text.size) {
       tsu = false
-      if (pb + 1 < text.size && tolower(text[pb]) == tolower(text[pb + 1]) && !aiueo(
-          tolower(
+      if (pb + 1 < text.size && toLower(text[pb]) == toLower(text[pb + 1]) && !aiueo(
+          toLower(
             text[pb]
           )
         )
       ) {
-        if (pb + 2 < text.size && tolower(text[pb]) == 'n' && tolower(text[pb + 1]) == 'n' && tolower(
+        if (pb + 2 < text.size && toLower(text[pb]) == 'n' && toLower(text[pb + 1]) == 'n' && toLower(
             text[pb + 2]
           ) == 'n'
         ) {
@@ -141,29 +125,29 @@ internal object Nihongo {
       }
       if (pb < text.size && findsub(text, pb).also { pls = it } >= 0) {
         if (tsu) {
-          if (tolower(text[pb - 1]) == 'n') kanabuf[pk++] = '\u3093'
+          if (toLower(text[pb - 1]) == 'n') kanabuf[pk++] = '\u3093'
           else kanabuf[pk++] = '\u3063'
         }
         r = 0
-        while (roma[pls]!![r++] != '=') pb++
+        while (roma[pls][r++] != '=') pb++
         pb--
         prs = pk
-        while (r < roma[pls]!!.size) kanabuf[prs++] = roma[pls]!![r++]
+        while (r < roma[pls].size) kanabuf[prs++] = roma[pls][r++]
         pk = prs
       }
-      else if (tolower(text[pb]) == 'n' || tolower(text[pb]) == 'm')
+      else if (toLower(text[pb]) == 'n' || toLower(text[pb]) == 'm')
         kanabuf[pk++] = '\u3093'
       else {
         val tmp = CharArray(4)
         pls = -1
-        if (pb + 1 < text.size && tolower(text[pb]) == 't' && tolower(text[pb + 1]) == 's') {
+        if (pb + 1 < text.size && toLower(text[pb]) == 't' && toLower(text[pb + 1]) == 's') {
           tmp[0] = 't'
           tmp[1] = 's'
           tmp[2] = 'u'
           tmp[3] = '\u0000'
           pls = findsub(tmp, 0)
         }
-        if (pb + 1 < text.size && tolower(text[pb]) == 's' && tolower(text[pb + 1]) == 'h') {
+        if (pb + 1 < text.size && toLower(text[pb]) == 's' && toLower(text[pb + 1]) == 'h') {
           tmp[0] = 's'
           tmp[1] = 'h'
           tmp[2] = 'i'
@@ -173,9 +157,9 @@ internal object Nihongo {
         if (pls >= 0) {
           r = 0
           pb++
-          while (roma[pls]!![r] != '=') r++
+          while (roma[pls][r] != '=') r++
           prs = pk
-          while (r < roma[pls]!!.size) kanabuf[prs++] = roma[pls]!![r++]
+          while (r < roma[pls].size) kanabuf[prs++] = roma[pls][r++]
           pk = prs
         } else {
           if (tsu) out.append(text[pb - 1])
@@ -191,7 +175,7 @@ internal object Nihongo {
     return out.toString()
   }
 
-  fun Romanate(text: CharArray, begin: Int, end: Int): String {
+  fun romanate(text: CharArray, begin: Int, end: Int): String {
     val out = StringBuilder()
     var pkana: Int
     var pk: Int
@@ -215,19 +199,19 @@ internal object Nihongo {
         while (pkana >= 0) {
           pk = 0
           pi = pb
-          while (pi <= end && pk < kana[pkana]!!.size && kana[pkana]!![pk] != '=') {
-            if (kana[pkana]!![pk] != text[pi] && kana[pkana]!![pk] != text[pi] - 0x60) break
+          while (pi <= end && pk < kana[pkana].size && kana[pkana][pk] != '=') {
+            if (kana[pkana][pk] != text[pi] && kana[pkana][pk] != text[pi] - 0x60) break
             pk++
             pi++
           }
-          if (kana[pkana]!![pk] == '=') {
+          if (kana[pkana][pk] == '=') {
             ps = pk + 1
             if (tsu) {
-              out.append(kana[pkana]!![ps])
+              out.append(kana[pkana][ps])
               tsu = false
             }
-            out.append(kana[pkana], ps, kana[pkana]!!.size - ps)
-            if (text[pb] == '\u3093' && pb + 1 <= end && Jaiueoy(text[pb + 1])) out.append('\'')
+            out.append(kana[pkana], ps, kana[pkana].size - ps)
+            if (text[pb] == '\u3093' && pb + 1 <= end && jAiueoy(text[pb + 1])) out.append('\'')
             pb = pi - 1
             break
           }
@@ -240,7 +224,7 @@ internal object Nihongo {
     return out.toString()
   }
 
-  fun Normalize(buffer: CharArray): Int {
+  fun normalize(buffer: CharArray): Int {
     var p: Int
     var unibuf: Int = 0.also { p = it }
     while (p < buffer.size && buffer[p] != '\u0000') {
@@ -272,7 +256,7 @@ internal object Nihongo {
         }
       }
       if (buffer[p] != '\uFF9E' && buffer[p] != '\uFF9F' && buffer[p] != '\u0301')
-        buffer[unibuf++] = hashtab[buffer[p].code]
+        buffer[unibuf++] = hashTab[buffer[p].code]
       p++
     }
     return unibuf
@@ -281,7 +265,7 @@ internal object Nihongo {
   init {
     for (j in 0..65535) {
       val i = j.toChar()
-      hashtab[j] =
+      hashTab[j] =
         when (i) {
           in 'A'..'Z', in '\u0410'..'\u042F' -> (i + 0x20)
           '\u0451', '\u0401' -> '\u0435'

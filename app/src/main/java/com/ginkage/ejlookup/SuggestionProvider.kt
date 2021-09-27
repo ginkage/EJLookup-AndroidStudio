@@ -14,7 +14,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.HashMap
 import java.util.HashSet
 import java.util.TreeMap
@@ -67,13 +66,12 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
     )
     private const val URI_MATCH_SUGGEST = 1
     @Throws(IOException::class)
-    private fun Tokenize(
+    private fun tokenize(
       text: CharArray,
       len: Int,
       fileIdx: DictionaryFile,
       suggest: HashMap<String, Int>,
-      task: String,
-      sugPos: Long
+      task: String
     ): Int {
       var last = -1
       var p = 0
@@ -91,7 +89,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
         p++
       }
       if (last >= 0) // Only search for the last word entered
-        Traverse(String(text, last, p - last), fileIdx, 0, "", suggest, task, sugPos)
+        traverse(String(text, last, p - last), fileIdx, 0, "", suggest, task, 0)
       return last
     }
 
@@ -105,18 +103,17 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
       )
       val text = CharArray(request.length)
       request.toCharArray(text, 0, 0, request.length)
-      val kanareq = Nihongo.Kanate(text)
+      val kanareq = Nihongo.kanate(text)
       val kanatext = CharArray(kanareq.length)
       kanareq.toCharArray(kanatext, 0, 0, kanareq.length)
-      val qlen = Nihongo.Normalize(text)
-      val klen = Nihongo.Normalize(kanatext)
+      val qlen = Nihongo.normalize(text)
+      val klen = Nihongo.normalize(kanatext)
       val suggest = HashMap<String, Int>()
       var last = -1
       try {
-        val sugPos: Long = 0
         val fileIdx = DictionaryFile(context.assets, "suggest.dat")
-        last = Tokenize(text, qlen, fileIdx, suggest, task, sugPos)
-        if (!Arrays.equals(text, kanatext)) Tokenize(kanatext, klen, fileIdx, suggest, task, sugPos)
+        last = tokenize(text, qlen, fileIdx, suggest, task)
+        if (!text.contentEquals(kanatext)) tokenize(kanatext, klen, fileIdx, suggest, task)
         fileIdx.close()
       } catch (e: FileNotFoundException) {
         e.printStackTrace()
@@ -150,7 +147,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
             if (convert) {
               val txt = CharArray(str.length)
               str.toCharArray(txt, 0, 0, str.length)
-              k = Nihongo.Romanate(txt, 0, str.length - 1)
+              k = Nihongo.romanate(txt, 0, str.length - 1)
             }
           }
           if (!duplicate.contains(k)) {
@@ -174,7 +171,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
     }
 
     @Throws(IOException::class)
-    private fun Traverse(
+    private fun traverse(
       what: String,
       fidx: DictionaryFile,
       pos: Long,
@@ -211,7 +208,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
             nword = String(wbuf)
           } else {
             val wbuf = ByteArray(tlen)
-            fidx.read(wbuf, 0, tlen)
+            fidx.readBytes(wbuf, 0, tlen)
             nword = String(wbuf)
           }
         }
@@ -236,7 +233,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
             if (match < wlen) { // (match == nlen), Traverse children
               if (ch == word[match]) {
                 val newWord = word.substring(match) // Traverse children
-                return Traverse(
+                return traverse(
                   newWord,
                   fidx,
                   (p and 0x7fffffff).toLong(),
@@ -256,7 +253,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
             suglist[str] = v
           }
           for (child_pos in cpos.keys)  // Traverse everything that begins with this word
-            Traverse("", fidx, child_pos.toLong(), str + cpos[child_pos], suglist, task, sugPos)
+            traverse("", fidx, child_pos.toLong(), str + cpos[child_pos], suglist, task, sugPos)
           return true // Got result
         }
       }

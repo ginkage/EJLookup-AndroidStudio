@@ -9,11 +9,11 @@ import android.text.style.StyleSpan
 import java.util.ArrayList
 
 internal class ResultLine(input: String, var group: String) {
-  val data = ParseResult(input)
+  val data = parseResult(input)
 
   private inner class Span(val start: Int, val end: Int)
 
-  private fun ParseResult(input: String): SpannableString? {
+  private fun parseResult(input: String): SpannableString? {
     val result = StringBuilder()
     var i0 = -1
     var i1 = -1
@@ -49,7 +49,7 @@ internal class ResultLine(input: String, var group: String) {
     if (group.startsWith("kanjidic")) {
       kanji = i0 + 1
       while (kanji < len && text[kanji] == ' ') kanji++
-      p = strchr(text, kanji, ' ')
+      p = strChr(text, kanji, ' ')
       if (p >= 0) {
         text[p] = '\u0000'
         kana = p + 1
@@ -61,7 +61,7 @@ internal class ResultLine(input: String, var group: String) {
           }
           p++
         }
-        p = strchr(text, kana, '{')
+        p = strChr(text, kana, '{')
         if (p >= 0) {
           text[p - 1] = '\u0000'
           trans = p
@@ -98,7 +98,7 @@ internal class ResultLine(input: String, var group: String) {
         end--
         while (end > kanji && text[end] == ' ') text[end--] = '\u0000'
       }
-      addSubstr(skanji, text, kanji)
+      addSubStr(skanji, text, kanji)
     }
     if (kana >= 0) {
       p = kana
@@ -116,7 +116,7 @@ internal class ResultLine(input: String, var group: String) {
             skana.append('[').append(String(text, begin, end - begin + 1))
             if (text[begin].code > 127) {
               skana.append(if (kd) " / " else "]\n[")
-              skana.append(Nihongo.Romanate(text, begin, end))
+              skana.append(Nihongo.romanate(text, begin, end))
             }
             skana.append(']')
           }
@@ -169,7 +169,7 @@ internal class ResultLine(input: String, var group: String) {
             while (trans < len && text[trans] == ' ') trans++
             if (trans < len && text[trans] != '\u0000') {
               if (strans.isNotEmpty()) strans.append('\n')
-              addSubstr(strans, text, trans)
+              addSubStr(strans, text, trans)
             }
             trans = p
           }
@@ -179,28 +179,26 @@ internal class ResultLine(input: String, var group: String) {
           while (trans < len && text[trans] == ' ') trans++
           if (trans < len && text[trans] != '\u0000') {
             if (strans.isNotEmpty()) strans.append('\n')
-            addSubstr(strans, text, trans)
+            addSubStr(strans, text, trans)
           }
         }
       }
     }
     var kanjistart = -1
-    var kanjiend = -1
     var kanastart = -1
-    var kanaend = -1
     var transstart = -1
     if (skanji.isNotEmpty()) {
       if (result.isNotEmpty()) result.append('\n')
       kanjistart = result.length
       result.append(skanji)
     }
-    kanjiend = result.length
+    val kanjiend = result.length
     if (skana.isNotEmpty()) {
       if (result.isNotEmpty()) result.append('\n')
       kanastart = result.length
       result.append(skana)
     }
-    kanaend = result.length
+    val kanaend = result.length
     val italic = ArrayList<Span>()
     if (strans.isNotEmpty()) {
       if (result.isNotEmpty()) result.append('\n')
@@ -262,14 +260,14 @@ internal class ResultLine(input: String, var group: String) {
     private var font_size = 0
     var theme_color = 0
 
-    fun StartFill(fontSize: Int, themeColor: Int) {
+    fun startFill(fontSize: Int, themeColor: Int) {
       font_size = fontSize
       theme_color = themeColor
       rescount = 0
       resmax = 250
     }
 
-    private fun addSubstr(str: StringBuilder, text: CharArray, begin: Int) {
+    private fun addSubStr(str: StringBuilder, text: CharArray, begin: Int) {
       val len = text.size
       var end = -1
       var i: Int = begin
@@ -280,7 +278,7 @@ internal class ResultLine(input: String, var group: String) {
       if (end >= begin) str.append(text, begin, end - begin + 1)
     }
 
-    private fun strchr(text: CharArray, begin: Int, c: Char): Int {
+    private fun strChr(text: CharArray, begin: Int, c: Char): Int {
       val len = text.size
       var i: Int = begin
       while (i < len && text[i] != '\u0000') {
