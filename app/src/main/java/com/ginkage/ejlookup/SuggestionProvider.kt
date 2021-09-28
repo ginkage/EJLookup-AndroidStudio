@@ -50,20 +50,19 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
 
   internal class Pair(val line: String, val freq: Int) : Comparable<Pair> {
     override fun compareTo(other: Pair): Int {
-      return if (freq != other.freq) other.freq - freq else line.compareTo(
-        other.line,
-        ignoreCase = true
-      )
+      return if (freq != other.freq) other.freq - freq
+      else line.compareTo(other.line, ignoreCase = true)
     }
   }
 
   companion object {
     const val AUTHORITY = "com.ginkage.ejlookup.suggest"
-    private val COLUMNS = arrayOf(
-      BaseColumns._ID,
-      SearchManager.SUGGEST_COLUMN_TEXT_1,
-      SearchManager.SUGGEST_COLUMN_QUERY
-    )
+    private val COLUMNS =
+      arrayOf(
+        BaseColumns._ID,
+        SearchManager.SUGGEST_COLUMN_TEXT_1,
+        SearchManager.SUGGEST_COLUMN_QUERY
+      )
     private const val URI_MATCH_SUGGEST = 1
     @Throws(IOException::class)
     private fun tokenize(
@@ -76,9 +75,12 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
       var last = -1
       var p = 0
       while (p < len) {
-        if (Nihongo.letter(text[p])
-          || (text[p] == '\'' && p > 0 && p + 1 < len && Nihongo.letter(text[p - 1])
-            && Nihongo.letter(text[p + 1]))
+        if (Nihongo.letter(text[p]) ||
+            (text[p] == '\'' &&
+              p > 0 &&
+              p + 1 < len &&
+              Nihongo.letter(text[p - 1]) &&
+              Nihongo.letter(text[p + 1]))
         ) {
           if (last < 0) {
             last = p
@@ -89,7 +91,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
         p++
       }
       if (last >= 0) // Only search for the last word entered
-        traverse(String(text, last, p - last), fileIdx, 0, "", suggest, task, 0)
+       traverse(String(text, last, p - last), fileIdx, 0, "", suggest, task, 0)
       return last
     }
 
@@ -97,10 +99,10 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
       var result: ArrayList<String>? = null
       val maxsug =
         PreferenceManager.getDefaultSharedPreferences(context)
-          .getString(context!!.getString(R.string.setting_max_suggest), "10")!!.toInt()
-      val romanize: Boolean = EJLookupActivity.getPrefBoolean(
-        context.getString(R.string.setting_suggest_romaji), true
-      )
+            .getString(context!!.getString(R.string.setting_max_suggest), "10")!!
+          .toInt()
+      val romanize: Boolean =
+        EJLookupActivity.getPrefBoolean(context.getString(R.string.setting_suggest_romaji), true)
       val text = CharArray(request.length)
       request.toCharArray(text, 0, 0, request.length)
       val kanareq = Nihongo.kanate(text)
@@ -160,10 +162,10 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
     }
 
     private fun betole(p: Int): Int {
-      return ((p and 0x000000ff shl 24)
-        + (p and 0x0000ff00 shl 8)
-        + (p and 0x00ff0000 ushr 8)
-        + (p and -0x1000000 ushr 24))
+      return ((p and 0x000000ff shl 24) +
+        (p and 0x0000ff00 shl 8) +
+        (p and 0x00ff0000 ushr 8) +
+        (p and -0x1000000 ushr 24))
     }
 
     private fun shtoch(p: Int): Char {
@@ -252,8 +254,8 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
             v += freq
             suglist[str] = v
           }
-          for (child_pos in cpos.keys)  // Traverse everything that begins with this word
-            traverse("", fidx, child_pos.toLong(), str + cpos[child_pos], suglist, task, sugPos)
+          for (child_pos in cpos.keys) // Traverse everything that begins with this word
+          traverse("", fidx, child_pos.toLong(), str + cpos[child_pos], suglist, task, sugPos)
           return true // Got result
         }
       }

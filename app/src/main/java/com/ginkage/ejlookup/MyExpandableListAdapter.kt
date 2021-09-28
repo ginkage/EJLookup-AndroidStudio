@@ -77,7 +77,10 @@ internal class MyExpandableListAdapter(
   }
 
   override fun getGroupView(
-    groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup
+    groupPosition: Int,
+    isExpanded: Boolean,
+    convertView: View?,
+    parent: ViewGroup
   ): View {
     val group = getGroup(groupPosition) as String
     val textView = TextView(context)

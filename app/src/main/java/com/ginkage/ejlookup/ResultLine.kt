@@ -209,24 +209,21 @@ internal class ResultLine(input: String, var group: String) {
         result.append(strans.substring(0, begin))
         end = strans.indexOf("</i>", begin + 1)
         val `is` = result.length
-        strans = if (end < 0) {
-          result.append(strans.substring(begin + 3))
-          StringBuilder()
-        } else {
-          result.append(strans.substring(begin + 3, end))
-          StringBuilder(strans.substring(end + 4))
-        }
+        strans =
+          if (end < 0) {
+            result.append(strans.substring(begin + 3))
+            StringBuilder()
+          } else {
+            result.append(strans.substring(begin + 3, end))
+            StringBuilder(strans.substring(end + 4))
+          }
         italic.add(Span(`is`, result.length))
       }
       result.append(strans)
     }
     val res = SpannableString(result)
-    if (font_size == 1) res.setSpan(
-      RelativeSizeSpan(1.333333f),
-      0,
-      res.length,
-      0
-    ) else if (font_size == 2) res.setSpan(RelativeSizeSpan(1.666666f), 0, res.length, 0)
+    if (font_size == 1) res.setSpan(RelativeSizeSpan(1.333333f), 0, res.length, 0)
+    else if (font_size == 2) res.setSpan(RelativeSizeSpan(1.666666f), 0, res.length, 0)
     if (kanjistart >= 0) {
       res.setSpan(
         ForegroundColorSpan(

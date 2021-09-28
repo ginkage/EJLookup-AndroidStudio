@@ -22,10 +22,10 @@ internal object Nihongo {
   }
 
   private fun jAiueoy(c: Char): Boolean {
-    return (c in '\u3041'..'\u304A'
-      || c in '\u30A1'..'\u30AA'
-      || c in '\u3083'..'\u3088'
-      || c in '\u30E3'..'\u30E8')
+    return (c in '\u3041'..'\u304A' ||
+      c in '\u30A1'..'\u30AA' ||
+      c in '\u3083'..'\u3088' ||
+      c in '\u30E3'..'\u30E8')
   }
 
   private fun aiueo(c: Char): Boolean {
@@ -37,17 +37,18 @@ internal object Nihongo {
   }
 
   fun letter(c: Char): Boolean {
-    return (c in '0'..'9'
-      || c in 'A'..'Z'
-      || c in 'a'..'z'
-      || c in '\u00C0'..'\u02A8'
-      || c in '\u0401'..'\u0451'
-      || c == '\u3005' || c in '\u3041'..'\u30FA'
-      || c in '\u4E00'..'\uFA2D'
-      || c in '\uFF10'..'\uFF19'
-      || c in '\uFF21'..'\uFF3A'
-      || c in '\uFF41'..'\uFF5A'
-      || c in '\uFF66'..'\uFF9F')
+    return (c in '0'..'9' ||
+      c in 'A'..'Z' ||
+      c in 'a'..'z' ||
+      c in '\u00C0'..'\u02A8' ||
+      c in '\u0401'..'\u0451' ||
+      c == '\u3005' ||
+      c in '\u3041'..'\u30FA' ||
+      c in '\u4E00'..'\uFA2D' ||
+      c in '\uFF10'..'\uFF19' ||
+      c in '\uFF21'..'\uFF3A' ||
+      c in '\uFF41'..'\uFF5A' ||
+      c in '\uFF66'..'\uFF9F')
   }
 
   private fun findsub(str: CharArray, offset: Int): Int {
@@ -105,15 +106,14 @@ internal object Nihongo {
     var pb = 0
     while (pb < text.size) {
       tsu = false
-      if (pb + 1 < text.size && toLower(text[pb]) == toLower(text[pb + 1]) && !aiueo(
-          toLower(
-            text[pb]
-          )
-        )
+      if (pb + 1 < text.size &&
+          toLower(text[pb]) == toLower(text[pb + 1]) &&
+          !aiueo(toLower(text[pb]))
       ) {
-        if (pb + 2 < text.size && toLower(text[pb]) == 'n' && toLower(text[pb + 1]) == 'n' && toLower(
-            text[pb + 2]
-          ) == 'n'
+        if (pb + 2 < text.size &&
+            toLower(text[pb]) == 'n' &&
+            toLower(text[pb + 1]) == 'n' &&
+            toLower(text[pb + 2]) == 'n'
         ) {
           out.append('\u3093')
           pb++
@@ -125,8 +125,7 @@ internal object Nihongo {
       }
       if (pb < text.size && findsub(text, pb).also { pls = it } >= 0) {
         if (tsu) {
-          if (toLower(text[pb - 1]) == 'n') kanabuf[pk++] = '\u3093'
-          else kanabuf[pk++] = '\u3063'
+          if (toLower(text[pb - 1]) == 'n') kanabuf[pk++] = '\u3093' else kanabuf[pk++] = '\u3063'
         }
         r = 0
         while (roma[pls][r++] != '=') pb++
@@ -134,9 +133,7 @@ internal object Nihongo {
         prs = pk
         while (r < roma[pls].size) kanabuf[prs++] = roma[pls][r++]
         pk = prs
-      }
-      else if (toLower(text[pb]) == 'n' || toLower(text[pb]) == 'm')
-        kanabuf[pk++] = '\u3093'
+      } else if (toLower(text[pb]) == 'n' || toLower(text[pb]) == 'm') kanabuf[pk++] = '\u3093'
       else {
         val tmp = CharArray(4)
         pls = -1
@@ -184,14 +181,13 @@ internal object Nihongo {
     var pb = begin
     var tsu = false
     while (pb <= end) {
-      if (text[pb] in '\u3041'..'\u3094'
-        || text[pb] in '\u30A1'..'\u30FC'
-      ) {
+      if (text[pb] in '\u3041'..'\u3094' || text[pb] in '\u30A1'..'\u30FC') {
         if (text[pb] == '\u3063' || text[pb] == '\u30C3') {
-          if (pb + 1 <= end
-            && (text[pb + 1] in '\u3041'..'\u3094'
-              || text[pb + 1] in '\u30A1'..'\u30FC')
-          ) tsu = true else out.append("ltsu")
+          if (pb + 1 <= end &&
+              (text[pb + 1] in '\u3041'..'\u3094' || text[pb + 1] in '\u30A1'..'\u30FC')
+          )
+            tsu = true
+          else out.append("ltsu")
           pb++
           continue
         }
@@ -236,19 +232,35 @@ internal object Nihongo {
           '\uFF64' -> buffer[p] = '\u3001'
           '\uFF65' -> buffer[p] = '\u30FB'
           '\uFF66' -> buffer[p] = '\u30F2'
-          '\uFF67', '\uFF68', '\uFF69', '\uFF6A', '\uFF6B' -> buffer[p] = '\u30A1' + (buffer[p] - '\uFF67') * 2
+          '\uFF67', '\uFF68', '\uFF69', '\uFF6A', '\uFF6B' ->
+            buffer[p] = '\u30A1' + (buffer[p] - '\uFF67') * 2
           '\uFF6C', '\uFF6D', '\uFF6E' -> buffer[p] = '\u30E3' + (buffer[p] - '\uFF6C') * 2
           '\uFF6F' -> buffer[p] = '\u30C3'
           '\uFF70' -> buffer[p] = '\u30FC'
-          '\uFF71', '\uFF72', '\uFF73', '\uFF74', '\uFF75' -> buffer[p] = '\u30A2' + (buffer[p] - '\uFF71') * 2
-          '\uFF76', '\uFF77', '\uFF78', '\uFF79', '\uFF7A', '\uFF7B', '\uFF7C', '\uFF7D', '\uFF7E', '\uFF7F', '\uFF80', '\uFF81' -> buffer[p] =
-            '\u30AB' + (buffer[p] - '\uFF76') * 2
+          '\uFF71', '\uFF72', '\uFF73', '\uFF74', '\uFF75' ->
+            buffer[p] = '\u30A2' + (buffer[p] - '\uFF71') * 2
+          '\uFF76',
+          '\uFF77',
+          '\uFF78',
+          '\uFF79',
+          '\uFF7A',
+          '\uFF7B',
+          '\uFF7C',
+          '\uFF7D',
+          '\uFF7E',
+          '\uFF7F',
+          '\uFF80',
+          '\uFF81' -> buffer[p] = '\u30AB' + (buffer[p] - '\uFF76') * 2
           '\uFF82', '\uFF83', '\uFF84' -> buffer[p] = '\u30C4' + (buffer[p] - '\uFF82') * 2
-          '\uFF85', '\uFF86', '\uFF87', '\uFF88', '\uFF89' -> buffer[p] = '\u30CA' + (buffer[p] - '\uFF85')
-          '\uFF8A', '\uFF8B', '\uFF8C', '\uFF8D', '\uFF8E' -> buffer[p] = '\u30CF' + (buffer[p] - '\uFF8A') * 3
-          '\uFF8F', '\uFF90', '\uFF91', '\uFF92', '\uFF93' -> buffer[p] = '\u30DE' + (buffer[p] - '\uFF8F')
+          '\uFF85', '\uFF86', '\uFF87', '\uFF88', '\uFF89' ->
+            buffer[p] = '\u30CA' + (buffer[p] - '\uFF85')
+          '\uFF8A', '\uFF8B', '\uFF8C', '\uFF8D', '\uFF8E' ->
+            buffer[p] = '\u30CF' + (buffer[p] - '\uFF8A') * 3
+          '\uFF8F', '\uFF90', '\uFF91', '\uFF92', '\uFF93' ->
+            buffer[p] = '\u30DE' + (buffer[p] - '\uFF8F')
           '\uFF94', '\uFF95', '\uFF96' -> buffer[p] = '\u30E4' + (buffer[p] - '\uFF94') * 2
-          '\uFF97', '\uFF98', '\uFF99', '\uFF9A', '\uFF9B' -> buffer[p] = '\u30E9' + (buffer[p] - '\uFF97')
+          '\uFF97', '\uFF98', '\uFF99', '\uFF9A', '\uFF9B' ->
+            buffer[p] = '\u30E9' + (buffer[p] - '\uFF97')
           '\uFF9C' -> buffer[p] = '\u30EF'
           '\uFF9D' -> buffer[p] = '\u30F3'
           '\uFF9E' -> if (unibuf > 0) buffer[unibuf - 1] = buffer[unibuf - 1] + 1

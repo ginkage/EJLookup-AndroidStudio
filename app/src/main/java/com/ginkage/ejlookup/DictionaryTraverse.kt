@@ -12,60 +12,62 @@ import java.util.TreeSet
 internal object DictionaryTraverse {
   var filePath: String? = null
   var maxres = 0
-  val fileList = arrayOf(
-    "jr-edict",
-    "warodai",
-    "edict",
-    "kanjidic",
-    "ediclsd4",
-    "classical",
-    "compverb",
-    "compdic",
-    "lingdic",
-    "jddict",
-    "4jword3",
-    "aviation",
-    "buddhdic",
-    "engscidic",
-    "envgloss",
-    "findic",
-    "forsdic_e",
-    "forsdic_s",
-    "geodic",
-    "lawgledt",
-    "manufdic",
-    "mktdic",
-    "pandpdic",
-    "stardict",
-    "concrete"
-  )
-  val fileDesc = arrayOf<String?>(
-    "Japanese-Russian electronic dictionary",
-    "Big Japanese-Russian Dictionary",
-    "Japanese-English electronic dictionary",
-    "Kanji information",
-    "Japanese/English Life Science",
-    "Glenn's Classical Japanese dictionary",
-    "Handbook of Japanese Compound Verbs",
-    "Computing and telecommunications glossary",
-    "Francis Bond's J/E Linguistics Dictionary",
-    "Japanese-Deutsche Dictionary",
-    "4-kanji ideomatic expressions and proverbs",
-    "Ron Schei's E/J Aviation Dictionary",
-    "Buddhism words and phrases",
-    "Engineering and physical sciences",
-    "Environmental terms glossary",
-    "Financial terms glossary",
-    "Forestry terms, English",
-    "Forestry terms, Spanish",
-    "Geological terminology",
-    "University of Washington Japanese-English Legal Glossary",
-    "Manufacturing terms",
-    "Adam Rice's business & marketing glossary lists",
-    "Jim Minor's Pulp & Paper Industry Glossary",
-    "Raphael Garrouty's compilation of constellation names",
-    "Gururaj Rao's Concrete Terminology Glossary"
-  )
+  val fileList =
+    arrayOf(
+      "jr-edict",
+      "warodai",
+      "edict",
+      "kanjidic",
+      "ediclsd4",
+      "classical",
+      "compverb",
+      "compdic",
+      "lingdic",
+      "jddict",
+      "4jword3",
+      "aviation",
+      "buddhdic",
+      "engscidic",
+      "envgloss",
+      "findic",
+      "forsdic_e",
+      "forsdic_s",
+      "geodic",
+      "lawgledt",
+      "manufdic",
+      "mktdic",
+      "pandpdic",
+      "stardict",
+      "concrete"
+    )
+  val fileDesc =
+    arrayOf<String?>(
+      "Japanese-Russian electronic dictionary",
+      "Big Japanese-Russian Dictionary",
+      "Japanese-English electronic dictionary",
+      "Kanji information",
+      "Japanese/English Life Science",
+      "Glenn's Classical Japanese dictionary",
+      "Handbook of Japanese Compound Verbs",
+      "Computing and telecommunications glossary",
+      "Francis Bond's J/E Linguistics Dictionary",
+      "Japanese-Deutsche Dictionary",
+      "4-kanji ideomatic expressions and proverbs",
+      "Ron Schei's E/J Aviation Dictionary",
+      "Buddhism words and phrases",
+      "Engineering and physical sciences",
+      "Environmental terms glossary",
+      "Financial terms glossary",
+      "Forestry terms, English",
+      "Forestry terms, Spanish",
+      "Geological terminology",
+      "University of Washington Japanese-English Legal Glossary",
+      "Manufacturing terms",
+      "Adam Rice's business & marketing glossary lists",
+      "Jim Minor's Pulp & Paper Industry Glossary",
+      "Raphael Garrouty's compilation of constellation names",
+      "Gururaj Rao's Concrete Terminology Glossary"
+    )
 
   @Throws(IOException::class)
   private fun doSearch(
@@ -78,14 +80,7 @@ internal object DictionaryTraverse {
   ) {
     val mask = 1 shl wnum
     val lines = SparseBooleanArray()
-    traverse(
-      query,
-      fileIdx,
-      0,
-      (query.length > 1 || kanji) && partial != null,
-      true,
-      lines
-    )
+    traverse(query, fileIdx, 0, (query.length > 1 || kanji) && partial != null, true, lines)
     val size = lines.size()
     var i = 0
     while (i < size) {
@@ -110,34 +105,23 @@ internal object DictionaryTraverse {
     var kanji = false
     var p = 0
     while (p < len) {
-      if (Nihongo.letter(text[p])
-        || (text[p] == '\'' && p > 0 && p + 1 < len && Nihongo.letter(text[p - 1])
-          && Nihongo.letter(text[p + 1]))
+      if (Nihongo.letter(text[p]) ||
+          (text[p] == '\'' &&
+            p > 0 &&
+            p + 1 < len &&
+            Nihongo.letter(text[p - 1]) &&
+            Nihongo.letter(text[p + 1]))
       ) {
         if (last < 0) last = p
         if (text[p] >= '\u3200') kanji = true
       } else if (last >= 0) {
-        doSearch(
-          String(text, last, p - last),
-          wnum++,
-          fileIdx,
-          exact,
-          partial,
-          kanji
-        )
+        doSearch(String(text, last, p - last), wnum++, fileIdx, exact, partial, kanji)
         kanji = false
         last = -1
       }
       p++
     }
-    if (last >= 0) doSearch(
-      String(text, last, p - last),
-      wnum++,
-      fileIdx,
-      exact,
-      partial,
-      kanji
-    )
+    if (last >= 0) doSearch(String(text, last, p - last), wnum++, fileIdx, exact, partial, kanji)
     return wnum
   }
 
@@ -198,9 +182,7 @@ internal object DictionaryTraverse {
         }
         for (it in spos) if (sexact.size + spartial!!.size < maxres) {
           fileDic.seek(it.toLong())
-          spartial.add(
-            String(fileDic.readLine()!!.toByteArray(iso), utf)
-          )
+          spartial.add(String(fileDic.readLine()!!.toByteArray(iso), utf))
         }
       }
       fileDic.close()
@@ -257,10 +239,10 @@ internal object DictionaryTraverse {
   }
 
   private fun betole(p: Int): Int {
-    return ((p and 0x000000ff shl 24)
-      + (p and 0x0000ff00 shl 8)
-      + (p and 0x00ff0000 ushr 8)
-      + (p and -0x1000000 ushr 24))
+    return ((p and 0x000000ff shl 24) +
+      (p and 0x0000ff00 shl 8) +
+      (p and 0x00ff0000 ushr 8) +
+      (p and -0x1000000 ushr 24))
   }
 
   private fun shtoch(p: Int): Char {
@@ -289,7 +271,8 @@ internal object DictionaryTraverse {
     var nlen = 0
     var wlen = word.length
     var p: Int
-    if (!exact) fidx.skipBytes(if (unicode) tlen * 2 else tlen) else if (pos > 0) {
+    if (!exact) fidx.skipBytes(if (unicode) tlen * 2 else tlen)
+    else if (pos > 0) {
       word = word.substring(1)
       wlen--
       if (tlen > 0) {
@@ -323,14 +306,7 @@ internal object DictionaryTraverse {
           if (match < wlen) { // (match == nlen), Traverse children
             if (c == word[match].code) {
               val newWord = word.substring(match) // Traverse children
-              return traverse(
-                newWord,
-                fidx,
-                (p and 0x7fffffff).toLong(),
-                partial,
-                true,
-                poslist
-              )
+              return traverse(newWord, fidx, (p and 0x7fffffff).toLong(), partial, true, poslist)
             }
           } else if (partial && child) cpos.add(p and 0x7fffffff)
         } while (p and -0x80000000 == 0)

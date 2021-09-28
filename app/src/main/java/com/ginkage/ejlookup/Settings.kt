@@ -26,41 +26,37 @@ class Settings : PreferenceActivity() {
       EJLookupActivity.getPrefString(getString(R.string.setting_language), defLang)
     val ctx: Context = this
     val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-    listener = OnSharedPreferenceChangeListener { _: SharedPreferences?, key: String ->
-      if (key == getString(R.string.setting_theme_color) || key == getString(R.string.setting_language)) {
-        val newTheme: String? = EJLookupActivity.getPrefString(
-          getString(R.string.setting_theme_color), "0"
-        )
-        val newLang: String? = EJLookupActivity.getPrefString(
-          getString(R.string.setting_language), defLang
-        )
-        if (newLang != lang && newLang != "0"
-          || newTheme != theme
+    listener =
+      OnSharedPreferenceChangeListener { _: SharedPreferences?, key: String ->
+        if (key == getString(R.string.setting_theme_color) ||
+            key == getString(R.string.setting_language)
         ) {
-          val message = TextView(ctx)
-          message.text = getString(R.string.restart_msg) //"");
-          message.setPadding(5, 5, 5, 5)
-          message.gravity = Gravity.CENTER
-          val alertDialog = AlertDialog.Builder(ctx)
-            .setTitle(getString(R.string.app_name))
-            .setIcon(R.drawable.icon)
-            .setPositiveButton(getString(android.R.string.ok), null)
-            .setView(message)
-            .create()
-          alertDialog.setOnDismissListener {
-            val i = baseContext
-              .packageManager
-              .getLaunchIntentForPackage(
-                baseContext.packageName
-              )
-            i!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            startActivity(i)
-            exitProcess(0)
+          val newTheme: String? =
+            EJLookupActivity.getPrefString(getString(R.string.setting_theme_color), "0")
+          val newLang: String? =
+            EJLookupActivity.getPrefString(getString(R.string.setting_language), defLang)
+          if (newLang != lang && newLang != "0" || newTheme != theme) {
+            val message = TextView(ctx)
+            message.text = getString(R.string.restart_msg) // "");
+            message.setPadding(5, 5, 5, 5)
+            message.gravity = Gravity.CENTER
+            val alertDialog =
+              AlertDialog.Builder(ctx)
+                .setTitle(getString(R.string.app_name))
+                .setIcon(R.drawable.icon)
+                .setPositiveButton(getString(android.R.string.ok), null)
+                .setView(message)
+                .create()
+            alertDialog.setOnDismissListener {
+              val i = baseContext.packageManager.getLaunchIntentForPackage(baseContext.packageName)
+              i!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+              startActivity(i)
+              exitProcess(0)
+            }
+            alertDialog.show()
           }
-          alertDialog.show()
         }
       }
-    }
     preferences.registerOnSharedPreferenceChangeListener(listener)
     super.onCreate(savedInstanceState)
     EJLookupActivity.checkPreferences(this)

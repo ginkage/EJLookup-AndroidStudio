@@ -55,18 +55,15 @@ class EJLookupActivity : AppCompatActivity() {
     val adResults = MyExpandableListAdapter(results!!.context, ArrayList(), ArrayList())
     adResults.setData(reslist)
     results!!.setAdapter(adResults)
-    for (i in 0 until adResults.groupCount)
-      results!!.expandGroup(i)
+    for (i in 0 until adResults.groupCount) results!!.expandGroup(i)
     results!!.requestFocus()
   }
 
-  /** Called when the activity is first created.  */
+  /** Called when the activity is first created. */
   public override fun onCreate(savedInstanceState: Bundle?) {
     preferences = PreferenceManager.getDefaultSharedPreferences(this)
-    val theme = getPrefString(
-      R.string.setting_theme_color,
-      if (Build.BRAND == "chromium") "1" else "0"
-    )
+    val theme =
+      getPrefString(R.string.setting_theme_color, if (Build.BRAND == "chromium") "1" else "0")
     setTheme(if (theme == "1") R.style.AppThemeLight else R.style.AppTheme)
     super.onCreate(savedInstanceState)
     val defLang = Locale.getDefault().language
@@ -76,22 +73,19 @@ class EJLookupActivity : AppCompatActivity() {
       Locale.setDefault(locale)
       val config = Configuration()
       config.locale = locale
-      baseContext
-        .resources
-        .updateConfiguration(
-          config, baseContext.resources.displayMetrics
-        )
+      baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
     }
     requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS)
     setContentView(R.layout.main)
     setProgressBarIndeterminateVisibility(getResult != null)
     if (getResult != null) getResult!!.curContext = WeakReference(this)
     Nihongo.init(resources)
-    suggestions = SearchRecentSuggestions(
-      this,
-      SuggestionProvider.AUTHORITY,
-      SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES
-    )
+    suggestions =
+      SearchRecentSuggestions(
+        this,
+        SuggestionProvider.AUTHORITY,
+        SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES
+      )
     clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
     imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
     val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
@@ -102,10 +96,11 @@ class EJLookupActivity : AppCompatActivity() {
     query!!.setSearchableInfo(searchableInfo)
     query!!.isQueryRefinementEnabled = true
     query!!.setIconifiedByDefault(false) // Do not iconify the widget; expand it by default
-    results!!.setOnCreateContextMenuListener { menu: ContextMenu, v: View, menuInfo: ContextMenuInfo ->
+    results!!.setOnCreateContextMenuListener { menu: ContextMenu, v: View, menuInfo: ContextMenuInfo
+      ->
       val info = menuInfo as ExpandableListContextMenuInfo
-      if (ExpandableListView.getPackedPositionType(info.packedPosition)
-        == ExpandableListView.PACKED_POSITION_TYPE_CHILD
+      if (ExpandableListView.getPackedPositionType(info.packedPosition) ==
+          ExpandableListView.PACKED_POSITION_TYPE_CHILD
       ) {
         menu.setHeaderTitle(getString(R.string.app_name))
         menu.add(0, v.id, 0, getString(R.string.text_menu_copy))
@@ -124,7 +119,8 @@ class EJLookupActivity : AppCompatActivity() {
           lastQuery = newText
           return false
         }
-      })
+      }
+    )
     search!!.setOnClickListener { searchClicked() }
     search!!.setOnLongClickListener {
       var paste: CharSequence? = null
@@ -132,12 +128,14 @@ class EJLookupActivity : AppCompatActivity() {
       if (clip != null && clip.itemCount > 0) {
         paste = clip.getItemAt(0).coerceToText(this)
       }
-      if (paste == null || paste.isEmpty()) Toast.makeText(
-        this@EJLookupActivity,
-        getString(R.string.text_clipboard_empty),
-        Toast.LENGTH_LONG
-      )
-        .show() else {
+      if (paste == null || paste.isEmpty())
+        Toast.makeText(
+            this@EJLookupActivity,
+            getString(R.string.text_clipboard_empty),
+            Toast.LENGTH_LONG
+          )
+          .show()
+      else {
         query!!.setQuery(paste, true)
       }
       true
@@ -163,9 +161,7 @@ class EJLookupActivity : AppCompatActivity() {
   }
 
   override fun onCreateDialog(id: Int): Dialog {
-    return if (id == ID_DIALOG_ABOUT) createAboutDialog(
-      this
-    ) else super.onCreateDialog(id)
+    return if (id == ID_DIALOG_ABOUT) createAboutDialog(this) else super.onCreateDialog(id)
   }
 
   override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -176,12 +172,12 @@ class EJLookupActivity : AppCompatActivity() {
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     when (item.itemId) {
-        R.id.itemSettings -> {
-          val i = Intent(this@EJLookupActivity, Settings::class.java)
-          startActivity(i)
-        }
-        R.id.itemAbout -> showDialog(ID_DIALOG_ABOUT)
-        else -> return false
+      R.id.itemSettings -> {
+        val i = Intent(this@EJLookupActivity, Settings::class.java)
+        startActivity(i)
+      }
+      R.id.itemAbout -> showDialog(ID_DIALOG_ABOUT)
+      else -> return false
     }
     return true
   }
@@ -191,12 +187,7 @@ class EJLookupActivity : AppCompatActivity() {
     if (menuInfo is ExpandableListContextMenuInfo) {
       val info = item.menuInfo as ExpandableListContextMenuInfo
       val textView = info.targetView as TextView
-      clipboard!!.setPrimaryClip(
-        ClipData.newPlainText(
-          null,
-          textView.text.toString()
-        )
-      )
+      clipboard!!.setPrimaryClip(ClipData.newPlainText(null, textView.text.toString()))
     } else return false
     return true
   }
@@ -241,31 +232,34 @@ class EJLookupActivity : AppCompatActivity() {
       val activity = curContext?.get()
       if (activity != null) {
         when {
-            lines == null -> Toast.makeText(
-                    activity.applicationContext,
-                    activity.getString(R.string.text_error_unknown),
-                    Toast.LENGTH_LONG
-            )
-                    .show()
-            lines.size == 0 -> {
+          lines == null ->
+            Toast.makeText(
+                activity.applicationContext,
+                activity.getString(R.string.text_error_unknown),
+                Toast.LENGTH_LONG
+              )
+              .show()
+          lines.size == 0 -> {
+            Toast.makeText(
+                activity.applicationContext,
+                activity.getString(R.string.text_found_nothing),
+                Toast.LENGTH_LONG
+              )
+              .show()
+          }
+          else -> {
+            if (lines.size >= DictionaryTraverse.maxres)
               Toast.makeText(
-                      activity.applicationContext,
-                      activity.getString(R.string.text_found_nothing),
-                      Toast.LENGTH_LONG
-              )
-                      .show()
-            }
-            else -> {
-              if (lines.size >= DictionaryTraverse.maxres) Toast.makeText(
-                      activity.applicationContext, String.format(
-                      activity.getString(R.string.text_found_toomuch),
-                      DictionaryTraverse.maxres
-              ),
-                      Toast.LENGTH_LONG
-              )
-                      .show()
-              activity.setResults()
-            }
+                  activity.applicationContext,
+                  String.format(
+                    activity.getString(R.string.text_found_toomuch),
+                    DictionaryTraverse.maxres
+                  ),
+                  Toast.LENGTH_LONG
+                )
+                .show()
+            activity.setResults()
+          }
         }
         activity.setProgressBarIndeterminateVisibility(false)
       }
@@ -303,16 +297,17 @@ class EJLookupActivity : AppCompatActivity() {
       val pInfo: PackageInfo
       var versionInfo: String? = "0.01"
       try {
-        pInfo = context.packageManager
-          .getPackageInfo(context.packageName, PackageManager.GET_META_DATA)
+        pInfo =
+          context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_META_DATA)
         versionInfo = pInfo.versionName
       } catch (e: PackageManager.NameNotFoundException) {
         e.printStackTrace()
       }
-      val aboutTitle = String.format(
-        context.getString(R.string.about_dlg_title),
-        context.getString(R.string.app_name)
-      )
+      val aboutTitle =
+        String.format(
+          context.getString(R.string.about_dlg_title),
+          context.getString(R.string.app_name)
+        )
       val versionString = String.format(context.getString(R.string.about_dlg_version), versionInfo)
       val aboutText = context.getString(R.string.about_dlg_sources)
       val message = TextView(context)
