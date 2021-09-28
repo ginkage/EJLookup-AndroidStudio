@@ -102,12 +102,11 @@ internal class MyExpandableListAdapter(
     return true
   }
 
-  fun setData(data: ArrayList<ResultLine?>?) {
-    for (cit in data!!) addItem(cit!!)
+  fun setData(data: ArrayList<ResultLine>) {
+    for (cit in data) addItem(cit)
   }
 
   init {
-    var idx = 0
-    for (it in groups) groupIdx[it] = idx++
+    for ((idx, it) in groups.withIndex()) groupIdx[it] = idx
   }
 }

@@ -195,7 +195,7 @@ internal object DictionaryTraverse {
     }
   }
 
-  fun getLookupResults(context: EJLookupActivity, request: String): ArrayList<ResultLine?> {
+  fun getLookupResults(context: EJLookupActivity, request: String): ArrayList<ResultLine> {
     maxres = context.getPrefString(R.string.setting_max_results, "100")!!.toInt()
     val strPartial = context.getString(R.string.text_dictionary_partial)
     val text = CharArray(request.length)
@@ -205,7 +205,7 @@ internal object DictionaryTraverse {
     kanareq.toCharArray(kanatext, 0, 0, kanareq.length)
     val qlen = Nihongo.normalize(text)
     val klen = Nihongo.normalize(kanatext)
-    val result: ArrayList<ResultLine?> = ArrayList(maxres)
+    val result: ArrayList<ResultLine> = ArrayList(maxres)
     val sexact = TreeSet<String>()
     val spartial: Array<TreeSet<String>?> = arrayOfNulls(fileList.size)
     var etotal = 0

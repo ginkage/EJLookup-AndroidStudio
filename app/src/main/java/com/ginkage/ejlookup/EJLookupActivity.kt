@@ -40,23 +40,23 @@ import java.util.ArrayList
 import java.util.Locale
 
 class EJLookupActivity : AppCompatActivity() {
-  private var query: SearchView? = null
-  private var search: Button? = null
-  private var results: ExpandableListView? = null
-  private var clipboard: ClipboardManager? = null
-  private var imm: InputMethodManager? = null
-  private var suggestions: SearchRecentSuggestions? = null
+  private lateinit var query: SearchView
+  private lateinit var search: Button
+  private lateinit var results: ExpandableListView
+  private lateinit var clipboard: ClipboardManager
+  private lateinit var imm: InputMethodManager
+  private lateinit var suggestions: SearchRecentSuggestions
 
   fun getPrefString(key: Int, defValue: String?): String? {
     return preferences!!.getString(getString(key), defValue)
   }
 
   private fun setResults() {
-    val adResults = MyExpandableListAdapter(results!!.context, ArrayList(), ArrayList())
-    adResults.setData(reslist)
-    results!!.setAdapter(adResults)
-    for (i in 0 until adResults.groupCount) results!!.expandGroup(i)
-    results!!.requestFocus()
+    val adResults = MyExpandableListAdapter(results.context, ArrayList(), ArrayList())
+    adResults.setData(reslist!!)
+    results.setAdapter(adResults)
+    for (i in 0 until adResults.groupCount) results.expandGroup(i)
+    results.requestFocus()
   }
 
   /** Called when the activity is first created. */
@@ -93,10 +93,10 @@ class EJLookupActivity : AppCompatActivity() {
     results = findViewById(R.id.listResults)
     search = findViewById(R.id.buttonSearch)
     val searchableInfo = searchManager.getSearchableInfo(componentName)
-    query!!.setSearchableInfo(searchableInfo)
-    query!!.isQueryRefinementEnabled = true
-    query!!.setIconifiedByDefault(false) // Do not iconify the widget; expand it by default
-    results!!.setOnCreateContextMenuListener { menu: ContextMenu, v: View, menuInfo: ContextMenuInfo
+    query.setSearchableInfo(searchableInfo)
+    query.isQueryRefinementEnabled = true
+    query.setIconifiedByDefault(false) // Do not iconify the widget; expand it by default
+    results.setOnCreateContextMenuListener { menu: ContextMenu, v: View, menuInfo: ContextMenuInfo
       ->
       val info = menuInfo as ExpandableListContextMenuInfo
       if (ExpandableListView.getPackedPositionType(info.packedPosition) ==
@@ -107,8 +107,8 @@ class EJLookupActivity : AppCompatActivity() {
       }
     }
     if (reslist != null) setResults()
-    query!!.imeOptions = EditorInfo.IME_ACTION_SEARCH
-    query!!.setOnQueryTextListener(
+    query.imeOptions = EditorInfo.IME_ACTION_SEARCH
+    query.setOnQueryTextListener(
       object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
           searchClicked()
@@ -121,10 +121,10 @@ class EJLookupActivity : AppCompatActivity() {
         }
       }
     )
-    search!!.setOnClickListener { searchClicked() }
-    search!!.setOnLongClickListener {
+    search.setOnClickListener { searchClicked() }
+    search.setOnLongClickListener {
       var paste: CharSequence? = null
-      val clip = clipboard!!.primaryClip
+      val clip = clipboard.primaryClip
       if (clip != null && clip.itemCount > 0) {
         paste = clip.getItemAt(0).coerceToText(this)
       }
@@ -136,7 +136,7 @@ class EJLookupActivity : AppCompatActivity() {
           )
           .show()
       else {
-        query!!.setQuery(paste, true)
+        query.setQuery(paste, true)
       }
       true
     }
@@ -151,7 +151,7 @@ class EJLookupActivity : AppCompatActivity() {
   private fun handleIntent(intent: Intent) {
     if (Intent.ACTION_SEARCH == intent.action) {
       val text = intent.getStringExtra(SearchManager.QUERY)
-      query!!.setQuery(text, true)
+      query.setQuery(text, true)
     }
   }
 
@@ -187,33 +187,32 @@ class EJLookupActivity : AppCompatActivity() {
     if (menuInfo is ExpandableListContextMenuInfo) {
       val info = item.menuInfo as ExpandableListContextMenuInfo
       val textView = info.targetView as TextView
-      clipboard!!.setPrimaryClip(ClipData.newPlainText(null, textView.text.toString()))
+      clipboard.setPrimaryClip(ClipData.newPlainText(null, textView.text.toString()))
     } else return false
     return true
   }
 
   fun searchClicked() {
-    if (query!!.query.isEmpty()) {
+    if (query.query.isEmpty()) {
       Toast.makeText(this, getString(R.string.text_query_missing), Toast.LENGTH_LONG).show()
     } else if (getResult == null) {
-      imm!!.hideSoftInputFromWindow(query!!.windowToken, 0)
+      imm.hideSoftInputFromWindow(query.windowToken, 0)
       setProgressBarIndeterminateVisibility(true)
-      results!!.setAdapter(null as MyExpandableListAdapter?)
+      results.setAdapter(null as MyExpandableListAdapter?)
       reslist = null
       getResult = GetLookupResultsTask(this)
-      val text = query!!.query.toString()
-      suggestions!!.saveRecentQuery(text, null)
+      val text = query.query.toString()
+      suggestions.saveRecentQuery(text, null)
       getResult!!.execute(text)
     }
   }
 
   private class GetLookupResultsTask(activity: EJLookupActivity) :
-    AsyncTask<String?, Int?, ArrayList<ResultLine?>?>() {
+    AsyncTask<String, Int, ArrayList<ResultLine>?>() {
     var curContext: WeakReference<EJLookupActivity>? = WeakReference(activity)
 
-    override fun doInBackground(vararg args: String?): ArrayList<ResultLine?>? {
-      val activity = curContext?.get()
-      if (args == null || activity == null) return null
+    override fun doInBackground(vararg args: String): ArrayList<ResultLine>? {
+      val activity = curContext?.get() ?: return null
       val request = args[0]
       var fontSize = 0
       val fsize = activity.getPrefString(R.string.setting_font_size, "0")
@@ -222,12 +221,12 @@ class EJLookupActivity : AppCompatActivity() {
       val theme = activity.getPrefString(R.string.setting_theme_color, "0")
       if (theme == "1") themeColor = 1
       ResultLine.startFill(fontSize, themeColor)
-      return DictionaryTraverse.getLookupResults(activity, request!!)
+      return DictionaryTraverse.getLookupResults(activity, request)
     }
 
     override fun onProgressUpdate(vararg progress: Int?) {}
 
-    override fun onPostExecute(lines: ArrayList<ResultLine?>?) {
+    override fun onPostExecute(lines: ArrayList<ResultLine>?) {
       reslist = lines
       val activity = curContext?.get()
       if (activity != null) {
@@ -275,7 +274,7 @@ class EJLookupActivity : AppCompatActivity() {
 
   companion object {
     private const val ID_DIALOG_ABOUT = 0
-    private var reslist: ArrayList<ResultLine?>? = null
+    private var reslist: ArrayList<ResultLine>? = null
     private var getResult: GetLookupResultsTask? = null
     private var preferences: SharedPreferences? = null
     var lastQuery: String? = null

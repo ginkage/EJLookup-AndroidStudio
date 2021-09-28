@@ -10,9 +10,7 @@ import android.net.Uri
 import android.preference.PreferenceManager
 import android.provider.BaseColumns
 import android.text.TextUtils
-import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.UnsupportedEncodingException
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
@@ -21,6 +19,7 @@ import java.util.TreeSet
 
 class SuggestionProvider : SearchRecentSuggestionsProvider() {
   private val uriMatcher: UriMatcher
+
   override fun query(
     uri: Uri,
     projection: Array<String>?,
@@ -64,6 +63,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
         SearchManager.SUGGEST_COLUMN_QUERY
       )
     private const val URI_MATCH_SUGGEST = 1
+
     @Throws(IOException::class)
     private fun tokenize(
       text: CharArray,
@@ -117,10 +117,6 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
         last = tokenize(text, qlen, fileIdx, suggest, task)
         if (!text.contentEquals(kanatext)) tokenize(kanatext, klen, fileIdx, suggest, task)
         fileIdx.close()
-      } catch (e: FileNotFoundException) {
-        e.printStackTrace()
-      } catch (e: UnsupportedEncodingException) {
-        e.printStackTrace()
       } catch (e: IOException) {
         e.printStackTrace()
       }
