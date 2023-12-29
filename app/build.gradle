@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    namespace 'com.ginkage.ejlookup'
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.ginkage.ejlookup"
-        versionCode 42
-        versionName "1.8.1"
+        versionCode 43
+        versionName "1.8.2"
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 34
     }
 
     compileOptions {
@@ -31,5 +31,5 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
